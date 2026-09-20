@@ -59,183 +59,67 @@ function initBloodCursor() {
 }
 
 // ==========================================================================
-// 2. AMBIENT MUSIC & ATMOSPHERE ENGINE (WEB AUDIO API GAPLESS SEAMLESS LOOP)
+// 2. AMBIENT DRONE SYNTHESIZER (WEB AUDIO API - 100% INFINITE SEAMLESS ATMOSPHERE)
 // ==========================================================================
 function initDomainAudio() {
     const toggle = document.getElementById('audioToggle');
     const text = toggle ? toggle.querySelector('.audio-text') : null;
     if (!toggle) return;
 
-    const AudioContext = window.AudioContext || window.webkitAudioContext;
     let audioCtx = null;
-    let masterGain = null;
-    let currentSource = null;
-    let seamlessBuffer = null;
-    let isBuffering = false;
+    let osc1 = null, osc2 = null, subOsc = null;
+    let filter = null, gainNode = null;
     let isPlaying = false;
-    let useSynthFallback = false;
+    let stopTimeout = null;
 
-    // Synth fallback state
-    let osc1 = null, osc2 = null, subOsc = null, filter = null, synthGain = null;
+    function startSynth() {
+        if (stopTimeout) {
+            clearTimeout(stopTimeout);
+            stopTimeout = null;
+        }
 
-    // Ensure AudioContext is initialized and active on user gesture
-    function ensureContext() {
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
         if (!audioCtx) {
             audioCtx = new AudioContext();
-            masterGain = audioCtx.createGain();
-            masterGain.gain.setValueAtTime(0, audioCtx.currentTime);
-            masterGain.connect(audioCtx.destination);
-        }
-        if (audioCtx.state === 'suspended') {
+        } else if (audioCtx.state === 'suspended') {
             audioCtx.resume();
         }
-    }
 
-    // Mathematically seamless loop generator with silence trimming and equal-power crossfade
-    function makeSeamlessLoopBuffer(ctx, rawBuffer, crossfadeSec = 0.4) {
-        try {
-            const sampleRate = rawBuffer.sampleRate;
-            const channels = rawBuffer.numberOfChannels;
-            const totalSamples = rawBuffer.length;
-
-            // 1. Detect and trim silence at start & end
-            let startIdx = 0;
-            let endIdx = totalSamples - 1;
-            const silenceThreshold = 0.003;
-
-            const ch0 = rawBuffer.getChannelData(0);
-            while (startIdx < totalSamples && Math.abs(ch0[startIdx]) < silenceThreshold) {
-                startIdx++;
-            }
-            while (endIdx > startIdx && Math.abs(ch0[endIdx]) < silenceThreshold) {
-                endIdx--;
-            }
-
-            const activeSamples = (endIdx - startIdx) + 1;
-            if (activeSamples < sampleRate * 1.5) {
-                return rawBuffer;
-            }
-
-            // 2. Crossfade window (e.g. 0.35s to 0.5s)
-            const xSamples = Math.min(
-                Math.floor(crossfadeSec * sampleRate),
-                Math.floor(activeSamples * 0.2)
-            );
-            const newLen = activeSamples - xSamples;
-
-            const loopBuffer = ctx.createBuffer(channels, newLen, sampleRate);
-
-            for (let c = 0; c < channels; c++) {
-                const src = rawBuffer.getChannelData(c);
-                const dst = loopBuffer.getChannelData(c);
-
-                // Copy main body
-                for (let i = 0; i < newLen; i++) {
-                    dst[i] = src[startIdx + i];
-                }
-
-                // Apply equal-power sinusoidal crossfade at loop boundary (tail blended into head)
-                for (let i = 0; i < xSamples; i++) {
-                    const t = i / xSamples;
-                    const gainHead = Math.sin(t * Math.PI * 0.5);
-                    const gainTail = Math.cos(t * Math.PI * 0.5);
-                    const headSample = src[startIdx + i];
-                    const tailSample = src[startIdx + newLen + i];
-                    dst[i] = (headSample * gainHead) + (tailSample * gainTail);
-                }
-            }
-            return loopBuffer;
-        } catch (err) {
-            console.warn('Seamless buffer processing fallback:', err);
-            return rawBuffer;
-        }
-    }
-
-    // Preload audio buffer asynchronously
-    async function loadAudioBuffer() {
-        if (seamlessBuffer || isBuffering) return;
-        isBuffering = true;
-        try {
-            ensureContext();
-            const res = await fetch('assets/audio/bgm.mp3');
-            if (!res.ok) throw new Error('Failed to fetch bgm.mp3');
-            const arrayBuffer = await res.arrayBuffer();
-            const rawBuffer = await audioCtx.decodeAudioData(arrayBuffer);
-            seamlessBuffer = makeSeamlessLoopBuffer(audioCtx, rawBuffer, 0.4);
-            isBuffering = false;
-        } catch (e) {
-            console.warn('Custom audio load failed, using atmospheric synthesizer fallback:', e);
-            useSynthFallback = true;
-            isBuffering = false;
-        }
-    }
-
-    // Play buffer with 0ms gap hardware looping
-    function playBuffer() {
-        if (!audioCtx || !seamlessBuffer) return;
-        stopBuffer();
-
-        currentSource = audioCtx.createBufferSource();
-        currentSource.buffer = seamlessBuffer;
-        currentSource.loop = true; // Sample-accurate Web Audio API hardware loop
-        currentSource.connect(masterGain);
-
-        // Smooth cinematic fade-in
         const now = audioCtx.currentTime;
-        masterGain.gain.cancelScheduledValues(now);
-        masterGain.gain.setValueAtTime(0.001, now);
-        masterGain.gain.exponentialRampToValueAtTime(0.6, now + 0.5);
 
-        currentSource.start(0);
-    }
+        // Clean previous oscillators if running
+        try { if (osc1) osc1.stop(); } catch (e) {}
+        try { if (osc2) osc2.stop(); } catch (e) {}
+        try { if (subOsc) subOsc.stop(); } catch (e) {}
 
-    // Stop buffer with smooth fade-out
-    function stopBuffer() {
-        if (currentSource && audioCtx && masterGain) {
-            const now = audioCtx.currentTime;
-            masterGain.gain.cancelScheduledValues(now);
-            masterGain.gain.setValueAtTime(Math.max(masterGain.gain.value, 0.001), now);
-            masterGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.4);
-            const srcToStop = currentSource;
-            currentSource = null;
-            setTimeout(() => {
-                try {
-                    srcToStop.stop();
-                    srcToStop.disconnect();
-                } catch (e) {}
-            }, 450);
-        }
-    }
-
-    // Synthesizer fallback
-    function startSynth() {
-        ensureContext();
+        // Deep drone oscillators
         osc1 = audioCtx.createOscillator();
         osc2 = audioCtx.createOscillator();
         subOsc = audioCtx.createOscillator();
+
+        // Warm lowpass filter
         filter = audioCtx.createBiquadFilter();
-        synthGain = audioCtx.createGain();
-
         filter.type = 'lowpass';
-        filter.frequency.setValueAtTime(140, audioCtx.currentTime);
+        filter.frequency.setValueAtTime(140, now);
 
-        synthGain.gain.setValueAtTime(0.001, audioCtx.currentTime);
-        synthGain.gain.exponentialRampToValueAtTime(0.12, audioCtx.currentTime + 2.0);
+        gainNode = audioCtx.createGain();
+        gainNode.gain.setValueAtTime(0.0001, now);
+        gainNode.gain.exponentialRampToValueAtTime(0.14, now + 2.5);
 
         osc1.type = 'sawtooth';
-        osc1.frequency.setValueAtTime(55, audioCtx.currentTime);
+        osc1.frequency.setValueAtTime(55, now); // A1 note
 
         osc2.type = 'sine';
-        osc2.frequency.setValueAtTime(55.6, audioCtx.currentTime);
+        osc2.frequency.setValueAtTime(55.6, now); // Slight detune chorus
 
         subOsc.type = 'sine';
-        subOsc.frequency.setValueAtTime(27.5, audioCtx.currentTime);
+        subOsc.frequency.setValueAtTime(27.5, now); // A0 Sub-bass
 
         osc1.connect(filter);
         osc2.connect(filter);
         subOsc.connect(filter);
-        filter.connect(synthGain);
-        synthGain.connect(audioCtx.destination);
+        filter.connect(gainNode);
+        gainNode.connect(audioCtx.destination);
 
         osc1.start();
         osc2.start();
@@ -243,60 +127,37 @@ function initDomainAudio() {
     }
 
     function stopSynth() {
-        if (!synthGain || !audioCtx) return;
+        if (!gainNode || !audioCtx) return;
         const now = audioCtx.currentTime;
-        synthGain.gain.cancelScheduledValues(now);
-        synthGain.gain.setValueAtTime(Math.max(synthGain.gain.value, 0.001), now);
-        synthGain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.8);
-        setTimeout(() => {
+        gainNode.gain.cancelScheduledValues(now);
+        gainNode.gain.setValueAtTime(Math.max(gainNode.gain.value, 0.001), now);
+        gainNode.gain.exponentialRampToValueAtTime(0.0001, now + 1.0);
+
+        const currentOsc1 = osc1, currentOsc2 = osc2, currentSub = subOsc;
+        osc1 = null; osc2 = null; subOsc = null;
+
+        stopTimeout = setTimeout(() => {
             try {
-                if (osc1) osc1.stop();
-                if (osc2) osc2.stop();
-                if (subOsc) subOsc.stop();
+                if (currentOsc1) currentOsc1.stop();
+                if (currentOsc2) currentOsc2.stop();
+                if (currentSub) currentSub.stop();
             } catch (e) {}
-        }, 850);
+        }, 1100);
     }
 
-    // Atmospheric Toggle Click
-    toggle.addEventListener('click', async () => {
-        ensureContext();
-
+    toggle.addEventListener('click', () => {
         if (!isPlaying) {
+            startSynth();
             isPlaying = true;
             toggle.classList.add('active');
             if (text) text.textContent = 'ATMOSPHERE: ACTIVE';
-
-            if (!seamlessBuffer && !useSynthFallback) {
-                if (text) text.textContent = 'ATMOSPHERE: TUNING...';
-                await loadAudioBuffer();
-                if (!isPlaying) return; // User stopped while loading
-                if (text) text.textContent = 'ATMOSPHERE: ACTIVE';
-            }
-
-            if (seamlessBuffer && !useSynthFallback) {
-                playBuffer();
-            } else {
-                startSynth();
-            }
         } else {
+            stopSynth();
             isPlaying = false;
             toggle.classList.remove('active');
             if (text) text.textContent = 'ATMOSPHERE: OFF';
-
-            if (currentSource) {
-                stopBuffer();
-            } else {
-                stopSynth();
-            }
         }
     });
-
-    // Optional background preload on first interaction
-    const preloadOnTouch = () => {
-        loadAudioBuffer();
-        window.removeEventListener('pointerdown', preloadOnTouch);
-    };
-    window.addEventListener('pointerdown', preloadOnTouch, { once: true });
 }
 
 // ==========================================================================
