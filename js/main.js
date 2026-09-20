@@ -59,67 +59,132 @@ function initBloodCursor() {
 }
 
 // ==========================================================================
-// 2. AMBIENT DRONE SYNTHESIZER (WEB AUDIO API - 100% INFINITE SEAMLESS ATMOSPHERE)
+// 2. ORIGINAL DRIFT PHONK & ATMOSPHERE ENGINE (100% LEGAL & COPYRIGHT-FREE)
 // ==========================================================================
 function initDomainAudio() {
     const toggle = document.getElementById('audioToggle');
     const text = toggle ? toggle.querySelector('.audio-text') : null;
     if (!toggle) return;
 
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
     let audioCtx = null;
-    let osc1 = null, osc2 = null, subOsc = null;
-    let filter = null, gainNode = null;
+    let masterGain = null;
+    let phonkSource = null;
+    let phonkBuffer = null;
+    let isBuffering = false;
     let isPlaying = false;
+    let useSynthFallback = false;
+
+    // Procedural Synth Fallback State
+    let osc1 = null, osc2 = null, subOsc = null, filter = null, synthGain = null;
     let stopTimeout = null;
 
+    function ensureContext() {
+        if (!audioCtx) {
+            audioCtx = new AudioContext();
+            masterGain = audioCtx.createGain();
+            masterGain.gain.setValueAtTime(0, audioCtx.currentTime);
+            masterGain.connect(audioCtx.destination);
+        }
+        if (audioCtx.state === 'suspended') {
+            audioCtx.resume();
+        }
+    }
+
+    // Preload custom original phonk track into sample-accurate Web Audio buffer
+    async function loadPhonkBuffer() {
+        if (phonkBuffer || isBuffering) return;
+        isBuffering = true;
+        try {
+            ensureContext();
+            const res = await fetch('assets/audio/bgm.mp3');
+            if (!res.ok) throw new Error('Audio file not found');
+            const arrayBuf = await res.arrayBuffer();
+            phonkBuffer = await audioCtx.decodeAudioData(arrayBuf);
+            isBuffering = false;
+        } catch (e) {
+            console.warn('[Audio Engine] Phonk buffer load fallback to synth:', e);
+            useSynthFallback = true;
+            isBuffering = false;
+        }
+    }
+
+    // Play Phonk with 0ms gap hardware looping
+    function playPhonk() {
+        if (!audioCtx || !phonkBuffer) return;
+        stopPhonk();
+
+        phonkSource = audioCtx.createBufferSource();
+        phonkSource.buffer = phonkBuffer;
+        phonkSource.loop = true; // Hardware sample-accurate gapless infinite loop
+        phonkSource.connect(masterGain);
+
+        const now = audioCtx.currentTime;
+        masterGain.gain.cancelScheduledValues(now);
+        masterGain.gain.setValueAtTime(0.001, now);
+        masterGain.gain.exponentialRampToValueAtTime(0.65, now + 0.5);
+
+        phonkSource.start(0);
+    }
+
+    // Stop Phonk with smooth fade-out
+    function stopPhonk() {
+        if (phonkSource && audioCtx && masterGain) {
+            const now = audioCtx.currentTime;
+            masterGain.gain.cancelScheduledValues(now);
+            masterGain.gain.setValueAtTime(Math.max(masterGain.gain.value, 0.001), now);
+            masterGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.4);
+
+            const src = phonkSource;
+            phonkSource = null;
+            setTimeout(() => {
+                try {
+                    src.stop();
+                    src.disconnect();
+                } catch (e) {}
+            }, 450);
+        }
+    }
+
+    // Procedural Dark Synth Fallback
     function startSynth() {
+        ensureContext();
         if (stopTimeout) {
             clearTimeout(stopTimeout);
             stopTimeout = null;
         }
 
-        const AudioContext = window.AudioContext || window.webkitAudioContext;
-        if (!audioCtx) {
-            audioCtx = new AudioContext();
-        } else if (audioCtx.state === 'suspended') {
-            audioCtx.resume();
-        }
-
         const now = audioCtx.currentTime;
-
-        // Clean previous oscillators if running
         try { if (osc1) osc1.stop(); } catch (e) {}
         try { if (osc2) osc2.stop(); } catch (e) {}
         try { if (subOsc) subOsc.stop(); } catch (e) {}
 
-        // Deep drone oscillators
         osc1 = audioCtx.createOscillator();
         osc2 = audioCtx.createOscillator();
         subOsc = audioCtx.createOscillator();
-
-        // Warm lowpass filter
         filter = audioCtx.createBiquadFilter();
+        synthGain = audioCtx.createGain();
+
         filter.type = 'lowpass';
         filter.frequency.setValueAtTime(140, now);
 
-        gainNode = audioCtx.createGain();
-        gainNode.gain.setValueAtTime(0.0001, now);
-        gainNode.gain.exponentialRampToValueAtTime(0.14, now + 2.5);
+        synthGain.gain.setValueAtTime(0.0001, now);
+        synthGain.gain.exponentialRampToValueAtTime(0.14, now + 2.0);
 
         osc1.type = 'sawtooth';
-        osc1.frequency.setValueAtTime(55, now); // A1 note
+        osc1.frequency.setValueAtTime(55, now);
 
         osc2.type = 'sine';
-        osc2.frequency.setValueAtTime(55.6, now); // Slight detune chorus
+        osc2.frequency.setValueAtTime(55.6, now);
 
         subOsc.type = 'sine';
-        subOsc.frequency.setValueAtTime(27.5, now); // A0 Sub-bass
+        subOsc.frequency.setValueAtTime(27.5, now);
 
         osc1.connect(filter);
         osc2.connect(filter);
         subOsc.connect(filter);
-        filter.connect(gainNode);
-        gainNode.connect(audioCtx.destination);
+        filter.connect(synthGain);
+        synthGain.connect(audioCtx.destination);
 
         osc1.start();
         osc2.start();
@@ -127,37 +192,63 @@ function initDomainAudio() {
     }
 
     function stopSynth() {
-        if (!gainNode || !audioCtx) return;
+        if (!synthGain || !audioCtx) return;
         const now = audioCtx.currentTime;
-        gainNode.gain.cancelScheduledValues(now);
-        gainNode.gain.setValueAtTime(Math.max(gainNode.gain.value, 0.001), now);
-        gainNode.gain.exponentialRampToValueAtTime(0.0001, now + 1.0);
+        synthGain.gain.cancelScheduledValues(now);
+        synthGain.gain.setValueAtTime(Math.max(synthGain.gain.value, 0.001), now);
+        synthGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.8);
 
-        const currentOsc1 = osc1, currentOsc2 = osc2, currentSub = subOsc;
+        const c1 = osc1, c2 = osc2, cs = subOsc;
         osc1 = null; osc2 = null; subOsc = null;
-
         stopTimeout = setTimeout(() => {
             try {
-                if (currentOsc1) currentOsc1.stop();
-                if (currentOsc2) currentOsc2.stop();
-                if (currentSub) currentSub.stop();
+                if (c1) c1.stop();
+                if (c2) c2.stop();
+                if (cs) cs.stop();
             } catch (e) {}
-        }, 1100);
+        }, 850);
     }
 
-    toggle.addEventListener('click', () => {
+    // Toggle button click listener
+    toggle.addEventListener('click', async () => {
+        ensureContext();
+
         if (!isPlaying) {
-            startSynth();
             isPlaying = true;
             toggle.classList.add('active');
             if (text) text.textContent = 'ATMOSPHERE: ACTIVE';
+
+            if (!phonkBuffer && !useSynthFallback) {
+                if (text) text.textContent = 'ATMOSPHERE: TUNING...';
+                await loadPhonkBuffer();
+                if (!isPlaying) return; // Cancelled during load
+                if (text) text.textContent = 'ATMOSPHERE: ACTIVE';
+            }
+
+            if (phonkBuffer && !useSynthFallback) {
+                playPhonk();
+            } else {
+                startSynth();
+            }
         } else {
-            stopSynth();
             isPlaying = false;
             toggle.classList.remove('active');
             if (text) text.textContent = 'ATMOSPHERE: OFF';
+
+            if (phonkSource) {
+                stopPhonk();
+            } else {
+                stopSynth();
+            }
         }
     });
+
+    // Background preload on first touch / mouse movement
+    const preloadOnGesture = () => {
+        loadPhonkBuffer();
+        window.removeEventListener('pointerdown', preloadOnGesture);
+    };
+    window.addEventListener('pointerdown', preloadOnGesture, { once: true });
 }
 
 // ==========================================================================
