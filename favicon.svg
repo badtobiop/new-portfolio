@@ -1,0 +1,46 @@
+﻿<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 52 52">
+    <defs>
+        <radialGradient id="kamuiVoid" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stop-color="#080104" />
+            <stop offset="60%" stop-color="#1a020b" />
+            <stop offset="100%" stop-color="#ff003c" stop-opacity="0.95" />
+        </radialGradient>
+        <linearGradient id="kamuiBlade" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#ffffff" />
+            <stop offset="25%" stop-color="#ff4d79" />
+            <stop offset="65%" stop-color="#ff003c" />
+            <stop offset="100%" stop-color="#7a0016" />
+        </linearGradient>
+        <radialGradient id="kamuiPupil" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stop-color="#ffffff" />
+            <stop offset="40%" stop-color="#ff1a4e" />
+            <stop offset="100%" stop-color="#660012" />
+        </radialGradient>
+        <filter id="kamuiGlow" x="-30%" y="-30%" width="160%" height="160%">
+            <feGaussianBlur stdDeviation="1.5" result="blur" />
+            <feComposite in="SourceGraphic" in2="blur" operator="over" />
+        </filter>
+    </defs>
+
+    <!-- Outer Tech Orbit Rings -->
+    <circle cx="26" cy="26" r="23.5" fill="#0b0106" stroke="#ff003c" stroke-width="2.2" />
+    <circle cx="26" cy="26" r="20" fill="none" stroke="rgba(255, 255, 255, 0.25)" stroke-width="0.9" stroke-dasharray="4 6" />
+
+    <!-- Crimson Iris Bed -->
+    <circle cx="26" cy="26" r="18.5" fill="url(#kamuiVoid)" stroke="rgba(255, 0, 60, 0.7)" stroke-width="1.2" />
+
+    <!-- 3 Sleek Kamui Void Katana Blades (Badtobiop Mangekyo Signature) -->
+    <g class="kamui-blades">
+        <!-- Blade 1 (Top) -->
+        <path d="M26,26 C26,13.5 35.5,8.5 37.5,6.5 C33.5,15.5 33,22 26,26 Z" fill="url(#kamuiBlade)" filter="url(#kamuiGlow)" />
+        <!-- Blade 2 (Bottom Right) -->
+        <path d="M26,26 C36.5,32 40.5,43 41,45.5 C32.2,41.2 27.2,37.2 26,26 Z" fill="url(#kamuiBlade)" filter="url(#kamuiGlow)" />
+        <!-- Blade 3 (Bottom Left) -->
+        <path d="M26,26 C15.5,32 11.5,43 11,45.5 C19.8,41.2 24.8,37.2 26,26 Z" fill="url(#kamuiBlade)" filter="url(#kamuiGlow)" />
+
+        <!-- Central Cursed Energy Pupil -->
+        <circle cx="26" cy="26" r="5.5" fill="#060103" stroke="#ff003c" stroke-width="1.8" />
+        <circle cx="26" cy="26" r="3" fill="url(#kamuiPupil)" />
+        <circle cx="24.8" cy="24.8" r="1.1" fill="#ffffff" />
+    </g>
+</svg>
