@@ -16,7 +16,15 @@ module.exports = async (req, res) => {
   }
 
   try {
-    let { name, email, message } = req.body || {};
+    let body = req.body;
+    if (typeof body === 'string') {
+      try {
+        body = JSON.parse(body);
+      } catch (e) {}
+    }
+    body = body || {};
+
+    let { name, email, message } = body;
     name = (name || '').trim();
     email = (email || '').trim().toLowerCase();
     message = (message || '').trim();
@@ -37,7 +45,7 @@ module.exports = async (req, res) => {
       }
     });
 
-    const plainText = `New Portfolio Transmission Received!\n\nSender: ${name}\nEmail: ${email}\nDate: ${new Date().toLocaleString()}\n\nMessage:\n${message}\n\nReply directly to: ${email}`;
+    const plainText = `New Portfolio Transmission Received!\n\nSender Name: ${name}\nSender Email: ${email}\nDate: ${new Date().toLocaleString()}\n\nMessage / Project Details:\n${message}\n\nReply directly to: ${email}`;
 
     const htmlContent = `
     <div style="font-family: Arial, Helvetica, sans-serif; background: #0c0207; color: #ffffff; padding: 28px; border-radius: 12px; border: 1px solid #ff003c; max-width: 600px; margin: 0 auto;">
