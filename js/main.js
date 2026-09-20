@@ -59,44 +59,68 @@ function initBloodCursor() {
 }
 
 // ==========================================================================
-// 2. AMBIENT DRONE SYNTHESIZER (WEB AUDIO API)
+// 2. AMBIENT MUSIC & ATMOSPHERE ENGINE (CUSTOM MP3 + SYNTHESIZER FALLBACK)
 // ==========================================================================
 function initDomainAudio() {
     const toggle = document.getElementById('audioToggle');
     const text = toggle ? toggle.querySelector('.audio-text') : null;
     if (!toggle) return;
 
+    let audioElem = null;
     let audioCtx = null;
     let osc1 = null, osc2 = null, subOsc = null;
     let filter = null, gainNode = null;
     let isPlaying = false;
+    let useFileAudio = false;
+
+    // Check for custom audio tracks in assets/audio/ (bgm.mp3, theme.mp3, music.mp3)
+    const audioCandidates = [
+        'assets/audio/bgm.mp3',
+        'assets/audio/theme.mp3',
+        'assets/audio/music.mp3'
+    ];
+
+    function probeAudioSource(index = 0) {
+        if (index >= audioCandidates.length) return;
+        const testAudio = new Audio();
+        testAudio.addEventListener('canplaythrough', () => {
+            audioElem = testAudio;
+            audioElem.loop = true;
+            audioElem.volume = 0.45;
+            useFileAudio = true;
+            console.log('[Audio Engine] Custom MP3 track loaded:', audioCandidates[index]);
+        }, { once: true });
+        testAudio.addEventListener('error', () => {
+            probeAudioSource(index + 1);
+        }, { once: true });
+        testAudio.src = audioCandidates[index];
+    }
+    probeAudioSource(0);
 
     function startSynth() {
         const AudioContext = window.AudioContext || window.webkitAudioContext;
         audioCtx = new AudioContext();
 
-        // Deep drone oscillators
         osc1 = audioCtx.createOscillator();
         osc2 = audioCtx.createOscillator();
         subOsc = audioCtx.createOscillator();
 
-        // Warm lowpass filter
         filter = audioCtx.createBiquadFilter();
         filter.type = 'lowpass';
         filter.frequency.setValueAtTime(140, audioCtx.currentTime);
 
         gainNode = audioCtx.createGain();
         gainNode.gain.setValueAtTime(0.001, audioCtx.currentTime);
-        gainNode.gain.exponentialRampToValueAtTime(0.12, audioCtx.currentTime + 3);
+        gainNode.gain.exponentialRampToValueAtTime(0.12, audioCtx.currentTime + 2.5);
 
         osc1.type = 'sawtooth';
-        osc1.frequency.setValueAtTime(55, audioCtx.currentTime); // A1 note
+        osc1.frequency.setValueAtTime(55, audioCtx.currentTime);
 
         osc2.type = 'sine';
-        osc2.frequency.setValueAtTime(55.6, audioCtx.currentTime); // Slight detune chorus
+        osc2.frequency.setValueAtTime(55.6, audioCtx.currentTime);
 
         subOsc.type = 'sine';
-        subOsc.frequency.setValueAtTime(27.5, audioCtx.currentTime); // A0 Sub-bass
+        subOsc.frequency.setValueAtTime(27.5, audioCtx.currentTime);
 
         osc1.connect(filter);
         osc2.connect(filter);
@@ -113,21 +137,33 @@ function initDomainAudio() {
         if (!gainNode || !audioCtx) return;
         gainNode.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 1.2);
         setTimeout(() => {
-            if (osc1) osc1.stop();
-            if (osc2) osc2.stop();
-            if (subOsc) subOsc.stop();
-            if (audioCtx) audioCtx.close();
+            try {
+                if (osc1) osc1.stop();
+                if (osc2) osc2.stop();
+                if (subOsc) subOsc.stop();
+                if (audioCtx) audioCtx.close();
+            } catch (e) {}
         }, 1300);
     }
 
     toggle.addEventListener('click', () => {
         if (!isPlaying) {
-            startSynth();
+            if (useFileAudio && audioElem) {
+                audioElem.play().catch(() => {
+                    startSynth();
+                });
+            } else {
+                startSynth();
+            }
             isPlaying = true;
             toggle.classList.add('active');
             if (text) text.textContent = 'ATMOSPHERE: ACTIVE';
         } else {
-            stopSynth();
+            if (useFileAudio && audioElem) {
+                audioElem.pause();
+            } else {
+                stopSynth();
+            }
             isPlaying = false;
             toggle.classList.remove('active');
             if (text) text.textContent = 'ATMOSPHERE: OFF';
