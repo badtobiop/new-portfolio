@@ -66,36 +66,19 @@ function initDomainAudio() {
     const text = toggle ? toggle.querySelector('.audio-text') : null;
     if (!toggle) return;
 
-    let audioElem = null;
+    let audioElem = new Audio('assets/audio/bgm.mp3');
+    audioElem.loop = true;
+    audioElem.volume = 0.55;
+
     let audioCtx = null;
     let osc1 = null, osc2 = null, subOsc = null;
     let filter = null, gainNode = null;
     let isPlaying = false;
-    let useFileAudio = false;
+    let hasCustomAudio = true;
 
-    // Check for custom audio tracks in assets/audio/ (bgm.mp3, theme.mp3, music.mp3)
-    const audioCandidates = [
-        'assets/audio/bgm.mp3',
-        'assets/audio/theme.mp3',
-        'assets/audio/music.mp3'
-    ];
-
-    function probeAudioSource(index = 0) {
-        if (index >= audioCandidates.length) return;
-        const testAudio = new Audio();
-        testAudio.addEventListener('canplaythrough', () => {
-            audioElem = testAudio;
-            audioElem.loop = true;
-            audioElem.volume = 0.45;
-            useFileAudio = true;
-            console.log('[Audio Engine] Custom MP3 track loaded:', audioCandidates[index]);
-        }, { once: true });
-        testAudio.addEventListener('error', () => {
-            probeAudioSource(index + 1);
-        }, { once: true });
-        testAudio.src = audioCandidates[index];
-    }
-    probeAudioSource(0);
+    audioElem.addEventListener('error', () => {
+        hasCustomAudio = false;
+    });
 
     function startSynth() {
         const AudioContext = window.AudioContext || window.webkitAudioContext;
@@ -148,18 +131,25 @@ function initDomainAudio() {
 
     toggle.addEventListener('click', () => {
         if (!isPlaying) {
-            if (useFileAudio && audioElem) {
-                audioElem.play().catch(() => {
+            if (hasCustomAudio) {
+                audioElem.play().then(() => {
+                    isPlaying = true;
+                    toggle.classList.add('active');
+                    if (text) text.textContent = 'ATMOSPHERE: ACTIVE';
+                }).catch(() => {
                     startSynth();
+                    isPlaying = true;
+                    toggle.classList.add('active');
+                    if (text) text.textContent = 'ATMOSPHERE: ACTIVE';
                 });
             } else {
                 startSynth();
+                isPlaying = true;
+                toggle.classList.add('active');
+                if (text) text.textContent = 'ATMOSPHERE: ACTIVE';
             }
-            isPlaying = true;
-            toggle.classList.add('active');
-            if (text) text.textContent = 'ATMOSPHERE: ACTIVE';
         } else {
-            if (useFileAudio && audioElem) {
+            if (hasCustomAudio) {
                 audioElem.pause();
             } else {
                 stopSynth();
