@@ -1,0 +1,12 @@
+﻿{
+  "name": "new-portfolio",
+  "version": "1.0.0",
+  "description": "3D Anime Blood Realm Portfolio - Utkarsh Dhakane (badtobiop)",
+  "main": "index.html",
+  "scripts": {
+    "start": "node backend/server.js"
+  },
+  "dependencies": {
+    "nodemailer": "^6.9.14"
+  }
+}
