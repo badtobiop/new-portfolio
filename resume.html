@@ -1,0 +1,612 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Utkarsh Dhakane - Resume | Full Stack Developer</title>
+    <!-- Google Fonts: Inter & Outfit -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+
+    <style>
+        :root {
+            --primary: #0f172a;
+            --primary-accent: #2563eb;
+            --text-main: #1e293b;
+            --text-muted: #475569;
+            --border-color: #cbd5e1;
+            --bg-page: #f8fafc;
+            --card-bg: #ffffff;
+            --tag-bg: #f1f5f9;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: var(--bg-page);
+            color: var(--text-main);
+            line-height: 1.5;
+            font-size: 14px;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* Top Action Bar (Invisible in Print) */
+        .toolbar {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background: rgba(15, 23, 42, 0.95);
+            backdrop-filter: blur(8px);
+            color: #ffffff;
+            padding: 12px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+        }
+
+        .toolbar-title {
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.1rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .toolbar-title span {
+            color: #38bdf8;
+            font-weight: 400;
+            font-size: 0.85rem;
+            background: rgba(56, 189, 248, 0.15);
+            padding: 2px 8px;
+            border-radius: 4px;
+            border: 1px solid rgba(56, 189, 248, 0.3);
+        }
+
+        .toolbar-actions {
+            display: flex;
+            gap: 12px;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 0.88rem;
+            font-weight: 600;
+            text-decoration: none;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: none;
+        }
+
+        .btn-back {
+            background: rgba(255, 255, 255, 0.1);
+            color: #ffffff;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .btn-back:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateY(-1px);
+        }
+
+        .btn-print {
+            background: #2563eb;
+            color: #ffffff;
+            box-shadow: 0 2px 10px rgba(37, 99, 235, 0.4);
+        }
+
+        .btn-print:hover {
+            background: #1d4ed8;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 14px rgba(37, 99, 235, 0.5);
+        }
+
+        /* Printable Sheet Container */
+        .resume-container {
+            max-width: 850px;
+            margin: 28px auto 40px auto;
+            background: var(--card-bg);
+            padding: 40px 48px;
+            border-radius: 8px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+            border: 1px solid #e2e8f0;
+        }
+
+        /* Header Section */
+        .resume-header {
+            border-bottom: 2px solid var(--primary);
+            padding-bottom: 16px;
+            margin-bottom: 20px;
+        }
+
+        .name {
+            font-family: 'Outfit', sans-serif;
+            font-size: 28px;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+            color: var(--primary);
+            text-transform: uppercase;
+            margin-bottom: 4px;
+        }
+
+        .title {
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--primary-accent);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 12px;
+        }
+
+        .contact-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px 18px;
+            font-size: 13px;
+            color: var(--text-muted);
+        }
+
+        .contact-item {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            text-decoration: none;
+            color: var(--text-muted);
+            transition: color 0.15s ease;
+        }
+
+        .contact-item i {
+            color: var(--primary-accent);
+            font-size: 13px;
+        }
+
+        .contact-item a {
+            color: var(--text-muted);
+            text-decoration: none;
+        }
+
+        .contact-item a:hover {
+            color: var(--primary-accent);
+            text-decoration: underline;
+        }
+
+        /* Section Layout */
+        .section {
+            margin-bottom: 18px;
+        }
+
+        .section-title {
+            font-family: 'Outfit', sans-serif;
+            font-size: 14px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--primary);
+            border-bottom: 1.5px solid #e2e8f0;
+            padding-bottom: 4px;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .section-title i {
+            color: var(--primary-accent);
+            font-size: 13px;
+        }
+
+        .summary-text {
+            font-size: 13.5px;
+            color: var(--text-muted);
+            line-height: 1.6;
+            text-align: justify;
+        }
+
+        /* Technical Skills Section */
+        .skills-table {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 7px;
+        }
+
+        .skill-row {
+            display: grid;
+            grid-template-columns: 180px 1fr;
+            font-size: 13px;
+            line-height: 1.45;
+        }
+
+        .skill-category {
+            font-weight: 600;
+            color: var(--primary);
+        }
+
+        .skill-list {
+            color: var(--text-muted);
+        }
+
+        /* Project Entry */
+        .project-item {
+            margin-bottom: 14px;
+        }
+
+        .project-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .project-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            margin-bottom: 3px;
+        }
+
+        .project-title-area {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .project-name {
+            font-weight: 700;
+            font-size: 14.5px;
+            color: var(--primary);
+        }
+
+        .project-links a {
+            font-size: 12px;
+            color: var(--primary-accent);
+            text-decoration: none;
+            font-weight: 500;
+            display: inline-flex;
+            align-items: center;
+            gap: 3px;
+            background: #eff6ff;
+            padding: 1px 7px;
+            border-radius: 4px;
+            border: 1px solid #bfdbfe;
+        }
+
+        .project-links a:hover {
+            background: #dbeafe;
+        }
+
+        .project-tech {
+            font-size: 12.5px;
+            font-weight: 600;
+            color: #64748b;
+            font-style: italic;
+        }
+
+        .bullet-list {
+            list-style: none;
+            padding-left: 0;
+            margin-top: 4px;
+        }
+
+        .bullet-list li {
+            position: relative;
+            padding-left: 16px;
+            font-size: 13px;
+            color: var(--text-muted);
+            line-height: 1.5;
+            margin-bottom: 3px;
+        }
+
+        .bullet-list li::before {
+            content: "•";
+            position: absolute;
+            left: 3px;
+            color: var(--primary-accent);
+            font-weight: bold;
+            font-size: 14px;
+        }
+
+        .bullet-list li strong {
+            color: var(--text-main);
+            font-weight: 600;
+        }
+
+        /* Education Entry */
+        .edu-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 6px;
+        }
+
+        .edu-degree {
+            font-weight: 700;
+            font-size: 14px;
+            color: var(--primary);
+        }
+
+        .edu-institution {
+            font-size: 13px;
+            color: var(--text-muted);
+            margin-top: 1px;
+        }
+
+        .edu-date {
+            font-size: 12.5px;
+            font-weight: 600;
+            color: #64748b;
+            white-space: nowrap;
+        }
+
+        /* Print Optimization (Strict ATS 1-page/clean styling) */
+        @media print {
+            @page {
+                size: A4;
+                margin: 12mm 15mm;
+            }
+
+            body {
+                background: #ffffff !important;
+                color: #000000 !important;
+                font-size: 13px;
+            }
+
+            .toolbar {
+                display: none !important;
+            }
+
+            .resume-container {
+                box-shadow: none !important;
+                border: none !important;
+                padding: 0 !important;
+                margin: 0 !important;
+                max-width: 100% !important;
+            }
+
+            .project-links a {
+                background: none !important;
+                border: none !important;
+                padding: 0 !important;
+                color: #2563eb !important;
+                text-decoration: underline !important;
+            }
+
+            .contact-item a {
+                color: #000000 !important;
+            }
+
+            .section {
+                margin-bottom: 14px !important;
+                page-break-inside: avoid;
+            }
+
+            .project-item {
+                page-break-inside: avoid;
+            }
+        }
+
+        /* Responsive Mobile View */
+        @media (max-width: 650px) {
+            .resume-container {
+                margin: 12px;
+                padding: 24px 18px;
+            }
+
+            .skill-row {
+                grid-template-columns: 1fr;
+                gap: 2px;
+            }
+
+            .project-header {
+                flex-direction: column;
+                gap: 2px;
+            }
+
+            .edu-item {
+                flex-direction: column;
+                gap: 2px;
+            }
+
+            .toolbar {
+                flex-direction: column;
+                gap: 10px;
+                align-items: stretch;
+                text-align: center;
+            }
+
+            .toolbar-actions {
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Non-Printing Top Toolbar -->
+    <header class="toolbar">
+        <div class="toolbar-title">
+            <i class="fa-solid fa-file-lines"></i>
+            Utkarsh Dhakane — Resume
+            <span>ATS Friendly & Print-Ready</span>
+        </div>
+        <div class="toolbar-actions">
+            <a href="index.html" class="btn btn-back">
+                <i class="fa-solid fa-arrow-left"></i> Portfolio
+            </a>
+            <button onclick="window.print()" class="btn btn-print">
+                <i class="fa-solid fa-print"></i> Print / Save as PDF
+            </button>
+        </div>
+    </header>
+
+    <!-- Printable Resume Sheet -->
+    <main class="resume-container" id="resume">
+
+        <!-- Header -->
+        <header class="resume-header">
+            <h1 class="name">Utkarsh Dhakane</h1>
+            <div class="title">Frontend Web Developer | AI-Augmented Prototyping | Learning React, Backend & Java</div>
+            <div class="contact-grid">
+                <div class="contact-item">
+                    <i class="fa-solid fa-envelope"></i>
+                    <a href="mailto:utkarshdhakane2@gmail.com">utkarshdhakane2@gmail.com</a>
+                </div>
+                <div class="contact-item">
+                    <i class="fa-solid fa-phone"></i>
+                    <a href="tel:+918149255670">+91 8149255670</a>
+                </div>
+                <div class="contact-item">
+                    <i class="fa-brands fa-github"></i>
+                    <a href="https://github.com/badtobiop" target="_blank">github.com/badtobiop</a>
+                </div>
+                <div class="contact-item">
+                    <i class="fa-solid fa-globe"></i>
+                    <a href="https://habbit-tracker-snowy-eta.vercel.app" target="_blank">habbit-tracker-snowy-eta.vercel.app</a>
+                </div>
+                <div class="contact-item">
+                    <i class="fa-solid fa-location-dot"></i>
+                    <span>Maharashtra, India</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Professional Summary -->
+        <section class="section">
+            <h2 class="section-title">
+                <i class="fa-solid fa-user"></i> Professional Summary
+            </h2>
+            <p class="summary-text">
+                Dedicated <strong>Frontend Web Developer</strong> (ENTC, 3rd Year) with a solid foundation in <strong>HTML5, CSS3, and JavaScript (ES6+)</strong>, and experience creating engaging interfaces with basic <strong>GSAP and Lenis</strong> animations. Skilled in leveraging modern <strong>AI-assisted development workflows</strong> to rapidly plan, prototype, and build responsive web applications. Actively expanding technical depth by learning <strong>React.js, Node.js, Express.js, Relational Databases (SQL)</strong>, and <strong>Data Structures & Algorithms (DSA) in Java</strong>. Creator of the <strong>Lunar Habit Tracker</strong>, an AI-engineered full-stack project integrating cloud databases and payment APIs under human creative direction.
+            </p>
+        </section>
+
+        <!-- Technical Skills -->
+        <section class="section">
+            <h2 class="section-title">
+                <i class="fa-solid fa-code"></i> Technical Skills
+            </h2>
+            <div class="skills-table">
+                <div class="skill-row">
+                    <span class="skill-category">Frontend & Web:</span>
+                    <span class="skill-list">HTML5, CSS3, JavaScript (ES6+), Responsive Web Design</span>
+                </div>
+                <div class="skill-row">
+                    <span class="skill-category">UI & Animations:</span>
+                    <span class="skill-list">GSAP (Basics), Lenis Smooth Scroll (Basics)</span>
+                </div>
+                <div class="skill-row">
+                    <span class="skill-category">Currently Learning:</span>
+                    <span class="skill-list">React.js, Node.js & Express.js, Relational Databases (SQL), Data Structures & Algorithms (DSA)</span>
+                </div>
+                <div class="skill-row">
+                    <span class="skill-category">Programming Languages (Basics):</span>
+                    <span class="skill-list">Java, C, C++, Python</span>
+                </div>
+                <div class="skill-row">
+                    <span class="skill-category">AI & Modern Workflows:</span>
+                    <span class="skill-list">AI-Assisted Web Prototyping, Prompt Engineering for Code Generation, Fast Debugging</span>
+                </div>
+                <div class="skill-row">
+                    <span class="skill-category">Tools & Platforms:</span>
+                    <span class="skill-list">Git & GitHub, VS Code, Vercel</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Key Projects -->
+        <section class="section">
+            <h2 class="section-title">
+                <i class="fa-solid fa-laptop-code"></i> Key Projects
+            </h2>
+
+            <!-- Project 1 -->
+            <div class="project-item">
+                <div class="project-header">
+                    <div class="project-title-area">
+                        <span class="project-name">Lunar Habit Tracker (AI-Assisted Full-Stack Project)</span>
+                        <span class="project-links">
+                            <a href="https://habbit-tracker-snowy-eta.vercel.app/" target="_blank">
+                                <i class="fa-solid fa-arrow-up-right-from-square"></i> Live Demo
+                            </a>
+                            <a href="https://github.com/badtobiop" target="_blank">
+                                <i class="fa-brands fa-github"></i> GitHub
+                            </a>
+                        </span>
+                    </div>
+                    <span class="project-tech">Next.js, Tailwind CSS, Turso Cloud DB (SQL), Razorpay API, JWT Auth, AI-Assisted Development, Vercel</span>
+                </div>
+                <ul class="bullet-list">
+                    <li><strong>AI-Assisted Full-Stack Development:</strong> Conceptualized and directed the creation of a full-stack gamified web app using advanced AI-assisted engineering workflows — directing the product vision, UI/UX layout, and feature logic.</li>
+                    <li><strong>Cloud Database Persistence:</strong> Connected to <strong>Turso Cloud Database (LibSQL/SQL)</strong> for persistent, multi-device cloud data storage across users, habits, and streak logs.</li>
+                    <li><strong>Authentication & Payments:</strong> Configured secure user authentication (JWT & Bcrypt password hashing) and integrated <strong>Razorpay Payment Gateway</strong> for pass upgrades.</li>
+                    <li><strong>Gamification Features:</strong> Designed streak tracking algorithms, daily quest tiers (E to S-Rank), and XP progression systems implemented via iterative AI prompting.</li>
+                </ul>
+            </div>
+
+            <!-- Project 2 -->
+            <div class="project-item">
+                <div class="project-header">
+                    <div class="project-title-area">
+                        <span class="project-name">Personal Developer Portfolio</span>
+                        <span class="project-links">
+                            <a href="https://github.com/badtobiop" target="_blank">
+                                <i class="fa-brands fa-github"></i> GitHub
+                            </a>
+                        </span>
+                    </div>
+                    <span class="project-tech">HTML5, CSS3, JavaScript (ES6+), GSAP (Basics), Lenis Smooth Scroll</span>
+                </div>
+                <ul class="bullet-list">
+                    <li>Designed and built a responsive developer portfolio demonstrating solid core frontend skills in semantic HTML5, custom CSS, and vanilla JavaScript.</li>
+                    <li>Implemented smooth page scrolling using <strong>Lenis</strong> and subtle UI micro-interactions using <strong>GSAP</strong>.</li>
+                    <li>Created interactive elements including a project details modal dialog and a validated contact form.</li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- Education -->
+        <section class="section">
+            <h2 class="section-title">
+                <i class="fa-solid fa-graduation-cap"></i> Education
+            </h2>
+            <div class="edu-item">
+                <div>
+                    <div class="edu-degree">Bachelor of Engineering (B.E.) - Electronics & Telecommunication (ENTC)</div>
+                    <div class="edu-institution">Dr. Vithalrao Vikhe Patil College of Engineering, Ahmednagar, Maharashtra</div>
+                </div>
+                <div class="edu-date">2023 - 2026 (Currently 3rd Year)</div>
+            </div>
+            <ul class="bullet-list" style="margin-top: 2px;">
+                <li><strong>Relevant Coursework:</strong> Object-Oriented Programming (OOP), Data Structures & Algorithms, Database Management Systems (DBMS), Web Technologies, Computer Networks.</li>
+            </ul>
+        </section>
+
+        <!-- Key Highlights / Strengths -->
+        <section class="section" style="margin-bottom: 0;">
+            <h2 class="section-title">
+                <i class="fa-solid fa-star"></i> Key Strengths
+            </h2>
+            <ul class="bullet-list">
+                <li><strong>AI-Accelerated Web Prototyping:</strong> Skilled at using AI tools to quickly prototype, debug, and build responsive web applications under clear human direction.</li>
+                <li><strong>Strong Frontend Fundamentals:</strong> Solid hands-on practice in HTML, CSS, JavaScript, and responsive design principles.</li>
+                <li><strong>Active Core Learner:</strong> Consistent daily dedication to learning SQL databases, Core Java, and Data Structures & Algorithms (DSA).</li>
+            </ul>
+        </section>
+
+    </main>
+
+</body>
+
+</html>
