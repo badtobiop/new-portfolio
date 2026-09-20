@@ -1,0 +1,687 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UTKARSH DHAKANE | Full-Stack Developer & Creative Engineer</title>
+    <meta name="description" content="Portfolio of Utkarsh Dhakane - Full-Stack Developer & Creative Engineer.">
+
+    <!-- Google Fonts: Cinzel Decorative (Stylish Gothic Name) + Syne + Outfit -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&family=Cinzel:wght@600;800&family=Outfit:wght@300;400;500;600;700&family=Syne:wght@700;800;900&display=swap" rel="stylesheet">
+
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+    <!-- Main Stylesheet -->
+    <link rel="stylesheet" href="css/style.css">
+
+    <!-- Three.js ES Modules Import Map -->
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+            "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+        }
+    }
+    </script>
+</head>
+<body>
+    <!-- Custom Blood Cursor -->
+    <div class="cursor-dot" id="cursorDot"></div>
+    <div class="cursor-trail" id="cursorTrail"></div>
+
+    <!-- Cinematic Overlays -->
+    <div class="vignette-overlay"></div>
+    <div class="scanline-overlay"></div>
+    <div class="noise-overlay"></div>
+
+    <!-- 3D Three.js Background Canvas -->
+    <canvas id="webgl-canvas"></canvas>
+    <!-- Foreground Particles Layer (Floats in front of text & images) -->
+    <canvas id="webgl-canvas-fg"></canvas>
+
+    <!-- FLOATING PILL NAVBAR WITH CUSTOM CYBER CREST LOGO -->
+    <header class="navbar-fixed-container">
+        <nav class="navbar-pill">
+            <a href="#hero" class="nav-brand" aria-label="Utkarsh Dhakane Home">
+                <div class="brand-crest">
+                    <div class="crest-aura-pulse"></div>
+                    <svg viewBox="0 0 52 52" class="crest-svg" xmlns="http://www.w3.org/2000/svg">
+                        <defs>
+                            <radialGradient id="kamuiVoid" cx="50%" cy="50%" r="50%">
+                                <stop offset="0%" stop-color="#080104" />
+                                <stop offset="60%" stop-color="#1a020b" />
+                                <stop offset="100%" stop-color="#ff003c" stop-opacity="0.85" />
+                            </radialGradient>
+                            <linearGradient id="kamuiBlade" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" stop-color="#ffffff" />
+                                <stop offset="25%" stop-color="#ff4d79" />
+                                <stop offset="65%" stop-color="#ff003c" />
+                                <stop offset="100%" stop-color="#7a0016" />
+                            </linearGradient>
+                            <radialGradient id="kamuiPupil" cx="50%" cy="50%" r="50%">
+                                <stop offset="0%" stop-color="#ffffff" />
+                                <stop offset="40%" stop-color="#ff1a4e" />
+                                <stop offset="100%" stop-color="#660012" />
+                            </radialGradient>
+                            <filter id="kamuiGlow" x="-30%" y="-30%" width="160%" height="160%">
+                                <feGaussianBlur stdDeviation="1.8" result="blur" />
+                                <feComposite in="SourceGraphic" in2="blur" operator="over" />
+                            </filter>
+                        </defs>
+
+                        <!-- Outer Tech Orbit Rings -->
+                        <circle cx="26" cy="26" r="23" fill="none" stroke="rgba(255, 0, 60, 0.25)" stroke-width="1.2" />
+                        <circle cx="26" cy="26" r="23" fill="none" stroke="#ff003c" stroke-width="2" stroke-dasharray="14 38" stroke-linecap="round" class="kamui-orbit-ring" />
+                        <circle cx="26" cy="26" r="20.5" fill="none" stroke="rgba(255, 255, 255, 0.15)" stroke-width="0.8" stroke-dasharray="4 8" />
+
+                        <!-- Crimson Iris Bed -->
+                        <circle cx="26" cy="26" r="19.5" fill="url(#kamuiVoid)" stroke="rgba(255, 0, 60, 0.55)" stroke-width="1.4" />
+
+                        <!-- 3 Sleek Kamui Void Katana Blades (Badtobiop Mangekyo Signature) -->
+                        <g class="kamui-blades-group">
+                            <!-- Blade 1 (Top) -->
+                            <path d="M26,26 C26,14 35.5,9 37.5,7 C33.5,15.5 33,22 26,26 Z" fill="url(#kamuiBlade)" filter="url(#kamuiGlow)" />
+                            <!-- Blade 2 (Bottom Right) -->
+                            <path d="M26,26 C36.2,32 40,42.5 40.5,45 C32.2,41 27.2,37.2 26,26 Z" fill="url(#kamuiBlade)" filter="url(#kamuiGlow)" />
+                            <!-- Blade 3 (Bottom Left) -->
+                            <path d="M26,26 C15.8,32 12,42.5 11.5,45 C19.8,41 24.8,37.2 26,26 Z" fill="url(#kamuiBlade)" filter="url(#kamuiGlow)" />
+
+                            <!-- Central Cursed Energy Pupil -->
+                            <circle cx="26" cy="26" r="5.2" fill="#060103" stroke="#ff003c" stroke-width="1.5" />
+                            <circle cx="26" cy="26" r="2.8" fill="url(#kamuiPupil)" />
+                            <circle cx="24.9" cy="24.9" r="1" fill="#ffffff" />
+                        </g>
+                    </svg>
+                </div>
+                <div class="brand-meta">
+                    <div class="brand-title-row">
+                        <span class="brand-title">UTKARSH</span>
+                        <span class="brand-dev-badge">badtobiop</span>
+                    </div>
+                    <div class="brand-role-row">
+                        <span class="role-pulse-dot"></span>
+                        <span class="brand-role">CREATIVE ENGINEER</span>
+                    </div>
+                </div>
+            </a>
+
+            <ul class="nav-links">
+                <li><a href="#hero" class="nav-link active" data-nav="hero">HOME</a></li>
+                <li><a href="#about" class="nav-link" data-nav="about">ABOUT</a></li>
+                <li><a href="#skills" class="nav-link" data-nav="skills">SKILLS</a></li>
+                <li><a href="#projects" class="nav-link" data-nav="projects">PROJECTS</a></li>
+                <li><a href="#contact" class="nav-link" data-nav="contact">CONTACT</a></li>
+            </ul>
+
+            <div class="nav-status-pill">
+                <span class="status-beacon"></span>
+                <span class="status-text">AVAILABLE FOR WORK</span>
+            </div>
+        </nav>
+    </header>
+
+    <!-- Audio Atmosphere Controller -->
+    <button class="audio-toggle" id="audioToggle" aria-label="Toggle Atmosphere Audio">
+        <div class="sound-bars">
+            <span class="bar"></span>
+            <span class="bar"></span>
+            <span class="bar"></span>
+        </div>
+        <span class="audio-text">ATMOSPHERE: OFF</span>
+    </button>
+
+    <!-- MAIN PORTFOLIO SECTIONS -->
+    <main class="main-container">
+
+        <!-- SECTION 1: HERO (MASKING FLASHLIGHT REVEAL) -->
+        <section class="section hero-section" id="hero">
+            <div class="hero-split-grid">
+                <!-- Left Column: Typography, Name & CTAs -->
+                <div class="hero-text-side">
+                    <div class="tech-badge">
+                        <i class="fa-solid fa-code"></i> FULL-STACK SOFTWARE DEVELOPER
+                    </div>
+                    <div class="hero-name-block">
+                        <span class="hero-intro">HELLO WORLD, I AM</span>
+                        <h1 class="hero-stylish-name">
+                            UTKARSH <span class="blood-text">DHAKANE</span>
+                        </h1>
+                    </div>
+                    <p class="hero-desc">
+                        Full-stack engineer crafting high-performance web applications, interactive real-time systems, and scalable digital architectures. Merging artistic design with rock-solid code.
+                    </p>
+                    <div class="hero-cta">
+                        <a href="#projects" class="btn btn-blood">
+                            <span>VIEW PROJECTS</span>
+                            <i class="fa-solid fa-arrow-right"></i>
+                        </a>
+                        <a href="#contact" class="btn btn-glass">
+                            <span>GET IN TOUCH</span>
+                            <i class="fa-regular fa-paper-plane"></i>
+                        </a>
+                    </div>
+                    <div class="scroll-hint">
+                        <span class="scroll-text">EXPLORE PORTFOLIO</span>
+                        <div class="scroll-arrow">
+                            <i class="fa-solid fa-angles-down"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Column: User's Anime Character Cutout with CSS Masking -->
+                <div class="hero-image-side">
+                    <div class="character-mask-stage" id="characterMaskStage">
+                        <!-- Layer 1: Normal Anime Form (Base) -->
+                        <img src="assets/images/user_anime.png" alt="Utkarsh Dhakane Normal Form" class="character-layer character-normal">
+
+                        <!-- Layer 2: Villain Alter-Ego (Revealed via Dynamic CSS Masking!) -->
+                        <img src="assets/images/villain_cutout.png" alt="Utkarsh Dhakane Villain Form" class="character-layer character-villain" id="villainLayer">
+
+                        <!-- Ground Shadow -->
+                        <div class="character-shadow-radial"></div>
+
+                        <!-- Interactive Hint Badge -->
+                        <div class="mask-interactive-hint">
+                            <i class="fa-solid fa-eye"></i>
+                            <span>HOVER TO REVEAL CURSED ALTER-EGO</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 2: ABOUT -->
+        <section class="section about-section" id="about">
+            <div class="about-two-col-grid">
+                <!-- Left Column: Clickable Character Card (Flipping triggers right content) -->
+                <div class="about-image-card glass-card" id="aboutImageCard" onclick="toggleAboutCard()" title="Click to flip dossier">
+                    <div class="slot-corner top-left"></div>
+                    <div class="slot-corner top-right"></div>
+                    <div class="slot-corner bottom-left"></div>
+                    <div class="slot-corner bottom-right"></div>
+
+                    <!-- Persona Badge -->
+                    <div class="about-persona-badge" id="aboutPersonaBadge">
+                        <span class="badge-dot"></span>
+                        <span id="personaBadgeText">CREATIVE ENGINEER</span>
+                    </div>
+
+                    <!-- Character Backdrop Aura -->
+                    <div class="about-character-backdrop" id="aboutBackdrop"></div>
+
+                    <!-- Single Standing Character Image (Permanent - Does NOT Change) -->
+                    <img src="assets/images/about_standing.png" alt="Utkarsh Dhakane Standing Pose" class="about-character-img">
+
+                    <!-- Click Hint -->
+                    <div class="about-click-hint" id="aboutClickHint">
+                        <i class="fa-solid fa-hand-pointer"></i>
+                        <span id="hintText">CLICK TO REVEAL</span>
+                    </div>
+                </div>
+
+                <!-- Right Column: About Content (3D Flips between Overview & Beyond The Code) -->
+                <div class="about-content glass-card" id="aboutContent">
+
+                    <!-- STATE 1: Professional Info -->
+                    <div class="about-info-state" id="aboutInfo1">
+                        <div class="section-tag">02 // ABOUT ME</div>
+                        <h2 class="section-title about-state1-title">ENGINEERING<br>WITH <span class="blood-text">PURPOSE</span></h2>
+                        <div class="about-text">
+                            <p class="lead-text">
+                                I bridge the gap between creative visual excellence and bulletproof software engineering.
+                            </p>
+                            <p>
+                                Specializing in modern JavaScript, full-stack web applications, and intuitive user experiences. Focused on writing clean, maintainable code, optimizing low-latency architectures, and solving complex problems with cutting-edge tools.
+                            </p>
+                            <div class="stats-row">
+                                <div class="stat-box">
+                                    <span class="stat-number">6</span>
+                                    <span class="stat-label">MONTHS CODING</span>
+                                </div>
+                                <div class="stat-box">
+                                    <span class="stat-number">2</span>
+                                    <span class="stat-label">PROJECTS SHIPPED</span>
+                                </div>
+                                <div class="stat-box">
+                                    <span class="stat-number">20+</span>
+                                    <span class="stat-label">LEETCODE SOLVED</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- STATE 2: Personal Info (Beyond The Code - 3D Flipped) -->
+                    <div class="about-info-state" id="aboutInfo2">
+                        <div class="section-tag villain-tag">// PERSONAL DOSSIER</div>
+                        <h2 class="section-title about-state2-title">BEYOND <span class="blood-text">THE</span> CODE</h2>
+                        <div class="about-text personal-info">
+
+                            <div class="info-row">
+                                <i class="fa-solid fa-cake-candles info-icon"></i>
+                                <div class="info-data">
+                                    <span class="info-label">AGE</span>
+                                    <span class="info-value">20 Years Old</span>
+                                </div>
+                            </div>
+
+                            <div class="info-row">
+                                <i class="fa-solid fa-microchip info-icon"></i>
+                                <div class="info-data">
+                                    <span class="info-label">BRANCH</span>
+                                    <span class="info-value">Electronics &amp; Telecommunication (B.E.)</span>
+                                </div>
+                            </div>
+
+                            <div class="info-row">
+                                <i class="fa-solid fa-location-dot info-icon"></i>
+                                <div class="info-data">
+                                    <span class="info-label">LOCATION</span>
+                                    <span class="info-value">Maharashtra, India</span>
+                                </div>
+                            </div>
+
+                            <div class="info-row">
+                                <i class="fa-solid fa-book-open info-icon"></i>
+                                <div class="info-data">
+                                    <span class="info-label">CURRENTLY GRINDING</span>
+                                    <span class="info-value">DSA in Java &nbsp;<span class="year-badge">IN PROGRESS</span></span>
+                                </div>
+                            </div>
+
+                            <div class="info-row">
+                                <i class="fa-solid fa-code info-icon"></i>
+                                <div class="info-data">
+                                    <span class="info-label">SKILLS I KNOW</span>
+                                    <span class="info-value">JavaScript &nbsp;•&nbsp; TypeScript &nbsp;•&nbsp; Node.js &nbsp;•&nbsp; CSS &nbsp;•&nbsp; Express.js &nbsp;•&nbsp; GSAP &nbsp;•&nbsp; Lenis</span>
+                                </div>
+                            </div>
+
+                            <div class="info-row">
+                                <i class="fa-brands fa-java info-icon"></i>
+                                <div class="info-data">
+                                    <span class="info-label">ALSO LEARNING</span>
+                                    <span class="info-value">Java &nbsp;•&nbsp; DSA concepts &nbsp;•&nbsp; Problem solving</span>
+                                </div>
+                            </div>
+
+                            <div class="info-row goal-row">
+                                <i class="fa-solid fa-fire info-icon"></i>
+                                <div class="info-data">
+                                    <span class="info-label">GOAL</span>
+                                    <span class="info-value goal-value">Build things that feel impossible</span>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 3: SKILLS -->
+        <section class="section skills-section" id="skills">
+            <div class="skills-wrapper skills-center-layout">
+                <div class="skills-header text-center">
+                    <div class="section-tag">03 // SKILLS</div>
+                    <h2 class="section-title">TECHNICAL <span class="blood-text">ARSENAL</span></h2>
+                </div>
+
+                <!-- Pure Centered Giant 3D Interactive Gyroscope Stage (No cards, no clutter) -->
+                <!-- Seamless Borderless 3D Arena (No box, no borders - particles float freely behind Moon) -->
+                <div class="skills-hero-3d-stage" id="skills3dStage">
+                    <!-- 3D Canvas Viewport -->
+                    <div class="skills-canvas-container" id="skills3dCanvasContainer"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 4: PROJECTS -->
+        <section class="section projects-section" id="projects">
+            <div class="section-content">
+                <div class="section-tag">04 // PORTFOLIO SHOWCASE</div>
+                <h2 class="section-title">FEATURED <span class="blood-text">PROJECTS</span></h2>
+
+                <div class="projects-grid">
+                    <!-- Project 1: Lunar Habit Tracker -->
+                    <div class="project-card glass-card" data-project="habit-tracker" tabindex="0">
+                        <div class="project-thumb">
+                            <img src="assets/images/habit-tracker.jpg" alt="Lunar Habit Tracker Preview" loading="lazy">
+                            <div class="project-overlay-badge">
+                                <span><i class="fa-solid fa-fire"></i> LIVE APP</span>
+                            </div>
+                        </div>
+                        <div class="project-card-body">
+                            <div class="project-header">
+                                <span class="project-code">FEATURED // 01</span>
+                                <div class="project-links">
+                                    <a href="https://github.com/badtobiop/habbit-tracker" target="_blank" rel="noopener noreferrer" aria-label="GitHub Repository" title="GitHub Repository"><i class="fa-brands fa-github"></i></a>
+                                    <a href="https://habbit-tracker-snowy-eta.vercel.app/" target="_blank" rel="noopener noreferrer" aria-label="Live Demo" title="Open Live App"><i class="fa-solid fa-arrow-up-right-from-square"></i></a>
+                                </div>
+                            </div>
+                            <h3 class="project-title">Lunar Habit Tracker</h3>
+                            <p class="project-desc">Full-stack gamified habit sanctuary featuring Turso cloud database synchronization, Razorpay payments, and AI-augmented architecture.</p>
+                            <div class="card-pills">
+                                <span>Next.js 14</span>
+                                <span>Turso Cloud DB</span>
+                                <span>Razorpay API</span>
+                                <span>JWT Auth</span>
+                                <span>AI-Augmented</span>
+                            </div>
+                            <div class="project-actions">
+                                <a href="https://habbit-tracker-snowy-eta.vercel.app/" target="_blank" rel="noopener noreferrer" class="proj-btn live-btn" onclick="event.stopPropagation();">
+                                    <span>Open Project</span>
+                                    <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                                </a>
+                                <a href="https://github.com/badtobiop/habbit-tracker" target="_blank" rel="noopener noreferrer" class="proj-btn github-btn" onclick="event.stopPropagation();">
+                                    <i class="fa-brands fa-github"></i>
+                                    <span>GitHub</span>
+                                </a>
+                                <button type="button" class="proj-btn detail-btn" onclick="openProjectModal('habit-tracker');">
+                                    <span>Details</span>
+                                    <i class="fa-solid fa-expand"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Project 2: Aura AI — Autonomous Expense Monitor -->
+                    <div class="project-card glass-card" data-project="aura-ai" tabindex="0">
+                        <div class="project-thumb">
+                            <img src="assets/images/aura-ai.jpg" alt="Aura AI Financial Intelligence Preview" loading="lazy">
+                            <div class="project-overlay-badge">
+                                <i class="fa-solid fa-robot"></i>
+                                <span>AUTONOMOUS AI AGENT</span>
+                            </div>
+                        </div>
+                        <div class="project-card-body">
+                            <div class="project-header">
+                                <span class="project-code">FEATURED // 02</span>
+                                <div class="project-links">
+                                    <a href="https://github.com/badtobiop/money-monitor.git" target="_blank" rel="noopener noreferrer" aria-label="GitHub" title="GitHub Repository"><i class="fa-brands fa-github"></i></a>
+                                    <a href="https://money-monitor-ashen.vercel.app/" target="_blank" rel="noopener noreferrer" aria-label="Live Demo" title="Open Live App"><i class="fa-solid fa-arrow-up-right-from-square"></i></a>
+                                </div>
+                            </div>
+                            <h3 class="project-title">Aura AI — Autonomous Expense Monitor</h3>
+                            <p class="project-desc">Autonomous financial intelligence system featuring natural language tool-calling AI agent, real-time expense telemetry, spend leakage detector, and Google OAuth 2.0.</p>
+                            <div class="card-pills">
+                                <span>AI Tool Calling</span>
+                                <span>Node.js</span>
+                                <span>SQLite</span>
+                                <span>Google OAuth</span>
+                            </div>
+                            <div class="project-actions">
+                                <a href="https://money-monitor-ashen.vercel.app/" target="_blank" rel="noopener noreferrer" class="proj-btn live-btn" onclick="event.stopPropagation();">
+                                    <span>Open Project</span>
+                                    <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                                </a>
+                                <a href="https://github.com/badtobiop/money-monitor.git" target="_blank" rel="noopener noreferrer" class="proj-btn github-btn" onclick="event.stopPropagation();">
+                                    <i class="fa-brands fa-github"></i>
+                                    <span>GitHub</span>
+                                </a>
+                                <button type="button" class="proj-btn detail-btn" onclick="openProjectModal('aura-ai');">
+                                    <span>Details</span>
+                                    <i class="fa-solid fa-expand"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ==================== PROJECT DETAILS MODAL ==================== -->
+        <div class="project-modal" id="projectModal" aria-hidden="true" role="dialog" aria-modal="true">
+            <div class="modal-backdrop" id="modalBackdrop" onclick="closeProjectModal()"></div>
+            <div class="modal-container">
+                <button type="button" class="modal-close-btn" id="modalCloseBtn" onclick="closeProjectModal()" aria-label="Close modal">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+
+                <!-- ==================== HABIT TRACKER MODAL CONTENT ==================== -->
+                <div class="modal-body modal-project-content" id="modal-content-habit-tracker" style="display: none;">
+                    <div class="modal-hero">
+                        <img src="assets/images/habit-tracker.jpg" alt="Lunar Habit Tracker Hero" class="modal-hero-img">
+                        <div class="modal-hero-overlay">
+                            <div class="modal-pill"><i class="fa-solid fa-moon"></i> Full-Stack Gamified Habit Sanctuary</div>
+                            <h2 class="modal-title">Lunar Habit Tracker</h2>
+                            <p class="modal-subtitle">Turn your daily disciplines into an anime RPG quest with Turso Cloud DB, Razorpay checkout, and streak analytics.</p>
+                            <div class="modal-hero-actions">
+                                <a href="https://habbit-tracker-snowy-eta.vercel.app/" target="_blank" rel="noopener noreferrer" class="modal-btn modal-btn-primary">
+                                    <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                                    <span>Open Live Project</span>
+                                </a>
+                                <a href="https://github.com/badtobiop/habbit-tracker" target="_blank" rel="noopener noreferrer" class="modal-btn modal-btn-secondary">
+                                    <i class="fa-brands fa-github"></i>
+                                    <span>GitHub Repository</span>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="modal-details-grid">
+                        <div class="detail-card">
+                            <div class="detail-card-header">
+                                <div class="detail-icon"><i class="fa-solid fa-layer-group"></i></div>
+                                <div>
+                                    <h3>Project Features & Capabilities</h3>
+                                    <span class="detail-subhead">Key components built into this application</span>
+                                </div>
+                            </div>
+                            <ul class="features-list">
+                                <li>
+                                    <i class="fa-solid fa-circle-check"></i>
+                                    <div>
+                                        <strong>Gamified Habit Tracking & Daily Quests</strong>
+                                        <p>Organize habits across Coding, Fitness, Study, Mindset & Health with quest difficulty tiers (E-Rank to S-Rank) and instant XP rewards.</p>
+                                    </div>
+                                </li>
+                                <li>
+                                    <i class="fa-solid fa-circle-check"></i>
+                                    <div>
+                                        <strong>Sanctuary Mastery Rank Progression</strong>
+                                        <p>Level up from 1-Tomoe Initiate and Chūnin up to Mangekyō Sharingan and S-Rank Lunar Sovereign as you conquer daily targets.</p>
+                                    </div>
+                                </li>
+                                <li>
+                                    <i class="fa-solid fa-circle-check"></i>
+                                    <div>
+                                        <strong>Shinobi & Celestial Spirit Familiars</strong>
+                                        <p>Unlock companions like Kage Wolf, Homura Fire Fox, Karasu Crow, Ryuujin Dragon, and Susanoo providing passive XP multipliers.</p>
+                                    </div>
+                                </li>
+                                <li>
+                                    <i class="fa-solid fa-circle-check"></i>
+                                    <div>
+                                        <strong>Atomic Streak Flame & Calendar Heatmaps</strong>
+                                        <p>Mathematically accurate streak calculations, dynamic month traversal, daily reflection logs, and habit consistency analytics.</p>
+                                    </div>
+                                </li>
+                                <li>
+                                    <i class="fa-solid fa-database"></i>
+                                    <div>
+                                        <strong>Turso Distributed Cloud Database (LibSQL / SQLite on AWS Mumbai)</strong>
+                                        <p>Serverless edge database with automated relational schema migrations, sub-50ms query response, and cloud synchronization.</p>
+                                    </div>
+                                </li>
+                                <li>
+                                    <i class="fa-solid fa-shield-halved"></i>
+                                    <div>
+                                        <strong>Multi-Tenant Security & Razorpay Payments</strong>
+                                        <p>Encrypted authentication with JWT HTTP-only cookies, Bcrypt password hashing, and full Razorpay Payment Gateway integration.</p>
+                                    </div>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="modal-footer">
+                        <a href="https://habbit-tracker-snowy-eta.vercel.app/" target="_blank" rel="noopener noreferrer" class="modal-btn modal-btn-primary">
+                            <span>Launch Habit Tracker Live</span>
+                            <i class="fa-solid fa-arrow-right"></i>
+                        </a>
+                        <a href="https://github.com/badtobiop/habbit-tracker" target="_blank" rel="noopener noreferrer" class="modal-btn modal-btn-secondary">
+                            <i class="fa-brands fa-github"></i>
+                            <span>GitHub Repository</span>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- ==================== AURA AI MODAL CONTENT ==================== -->
+                <div class="modal-body modal-project-content" id="modal-content-aura-ai" style="display: none;">
+                    <div class="modal-hero">
+                        <img src="assets/images/aura-ai.jpg" alt="Aura AI Hero" class="modal-hero-img">
+                        <div class="modal-hero-overlay">
+                            <div class="modal-pill"><i class="fa-solid fa-robot"></i> Autonomous AI Agent & Financial Intelligence</div>
+                            <h2 class="modal-title">Aura AI — Autonomous Expense Monitor</h2>
+                            <p class="modal-subtitle">Real-Time Natural Language Tool Calling, Spend Leakage Diagnostics & Multi-Tenant Security</p>
+                            <div class="modal-hero-actions">
+                                <a href="https://money-monitor-ashen.vercel.app/" target="_blank" rel="noopener noreferrer" class="modal-btn modal-btn-primary">
+                                    <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                                    <span>Open Live Project</span>
+                                </a>
+                                <a href="https://github.com/badtobiop/money-monitor.git" target="_blank" rel="noopener noreferrer" class="modal-btn modal-btn-secondary">
+                                    <i class="fa-brands fa-github"></i>
+                                    <span>View GitHub</span>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="modal-details-grid">
+                        <div class="detail-card">
+                            <div class="detail-card-header">
+                                <div class="detail-icon"><i class="fa-solid fa-layer-group"></i></div>
+                                <div>
+                                    <h3>Project Features & Capabilities</h3>
+                                    <span class="detail-subhead">Key autonomous intelligence and financial management modules</span>
+                                </div>
+                            </div>
+                            <ul class="features-list">
+                                <li>
+                                    <i class="fa-solid fa-circle-check"></i>
+                                    <div>
+                                        <strong>Autonomous AI Agent with English Tool Calling (Function Calling)</strong>
+                                        <p>Users converse naturally with Aura in plain English (e.g., "I spent $25 on groceries"). The autonomous agent extracts structured parameters and executes database mutations directly without repetitive forms.</p>
+                                    </div>
+                                </li>
+                                <li>
+                                    <i class="fa-solid fa-circle-check"></i>
+                                    <div>
+                                        <strong>Financial Leakage Advisor & Spend Diagnostics</strong>
+                                        <p>Real-time analytics engine that compares monthly salary/inflow against category budgets, classifies discretionary expenses into leakage warnings, and alerts users before budget overruns.</p>
+                                    </div>
+                                </li>
+                                <li>
+                                    <i class="fa-solid fa-circle-check"></i>
+                                    <div>
+                                        <strong>Real-Time KPI Telemetry & Interactive Analytics</strong>
+                                        <p>Live animated KPI cards displaying Total Expenses, Monthly Inflow, Net Available Balance, and Discretionary Ratio with interactive graphical breakdowns.</p>
+                                    </div>
+                                </li>
+                                <li>
+                                    <i class="fa-solid fa-shield-halved"></i>
+                                    <div>
+                                        <strong>Enterprise Multi-Tenant Security & Google OAuth 2.0 (GIS)</strong>
+                                        <p>Seamless one-tap Google Identity Services (GIS) Sign-In, Bcrypt salted password encryption, JWT session management, and password-reset verification links.</p>
+                                    </div>
+                                </li>
+                                <li>
+                                    <i class="fa-solid fa-palette"></i>
+                                    <div>
+                                        <strong>Luxury Crimson-Rose Glassmorphism & Motion Design</strong>
+                                        <p>Curated visual language featuring dark-rose frosted backdrops, micro-spring interactions, animated floating AI FAB button with radar pulse ripples, and smooth view transitions.</p>
+                                    </div>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="modal-footer">
+                        <a href="https://money-monitor-ashen.vercel.app/" target="_blank" rel="noopener noreferrer" class="modal-btn modal-btn-primary">
+                            <span>Launch Aura AI Live</span>
+                            <i class="fa-solid fa-arrow-right"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SECTION 5: CONTACT -->
+        <section class="section contact-section" id="contact">
+            <div class="section-content">
+                <div class="section-tag">05 // GET IN TOUCH</div>
+                <h2 class="section-title">START A <span class="blood-text">CONVERSATION</span></h2>
+
+                <div class="contact-grid">
+                    <div class="contact-info">
+                        <p class="contact-lead">Have an exciting idea, an ambitious project, or an engineering role? Let's build something remarkable together.</p>
+                        <div class="contact-meta-item">
+                            <i class="fa-regular fa-envelope"></i>
+                            <a href="mailto:utkarshdhakane2@gmail.com" class="contact-meta-link">utkarshdhakane2@gmail.com</a>
+                        </div>
+                        <div class="contact-meta-item">
+                            <i class="fa-solid fa-location-dot"></i>
+                            <span>Open for Worldwide Remote & Relocation</span>
+                        </div>
+                        <div class="contact-socials">
+                            <a href="https://github.com/badtobiop" target="_blank" rel="noopener noreferrer" aria-label="GitHub" title="GitHub Profile"><i class="fa-brands fa-github"></i></a>
+                            <a href="https://www.linkedin.com/in/utkarsh-dhakane-6b7b53431/" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn" title="LinkedIn Profile"><i class="fa-brands fa-linkedin-in"></i></a>
+                            <a href="https://x.com/DONGAMI76974166" target="_blank" rel="noopener noreferrer" aria-label="Twitter / X" title="Twitter / X Profile"><i class="fa-brands fa-x-twitter"></i></a>
+                        </div>
+                    </div>
+
+                    <form class="contact-form glass-card" id="contactForm">
+                        <div class="form-group">
+                            <label for="contactName">YOUR NAME</label>
+                            <input type="text" id="contactName" placeholder="John Doe" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="contactEmail">YOUR EMAIL</label>
+                            <input type="email" id="contactEmail" placeholder="john@example.com" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="contactMsg">PROJECT DETAILS</label>
+                            <textarea id="contactMsg" rows="4" placeholder="Tell me about your project, timeline, and goals..." required></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-blood">
+                            <span>SEND MESSAGE</span>
+                            <i class="fa-solid fa-paper-plane"></i>
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="footer">
+        <div class="footer-content">
+            <span class="footer-copy">&copy; 2026 UTKARSH DHAKANE. ALL RIGHTS RESERVED.</span>
+            <span class="footer-badge">CRAFTED WITH PRECISION & THREE.JS</span>
+        </div>
+    </footer>
+
+    <!-- GSAP & ScrollTrigger Official Production Engine -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+
+    <!-- Lenis Smooth Momentum Scroll Engine -->
+    <script src="https://unpkg.com/lenis@1.3.26/dist/lenis.min.js"></script>
+
+    <!-- Professional Scroll & Kinetic Animation System -->
+    <script src="js/scroll-engine.js"></script>
+
+    <!-- Three.js Ambient Particle Scene Script -->
+    <script type="module" src="js/three-scene.js"></script>
+
+    <!-- Main UI & Interaction Logic -->
+    <script type="module" src="js/skills-3d.js"></script>
+    <script src="js/main.js"></script>
+    <div class="toast-container" id="toastContainer"></div>
+</body>
+</html>
