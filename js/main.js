@@ -122,7 +122,7 @@ function initDomainAudio() {
         const now = audioCtx.currentTime;
         masterGain.gain.cancelScheduledValues(now);
         masterGain.gain.setValueAtTime(0.001, now);
-        masterGain.gain.exponentialRampToValueAtTime(0.65, now + 0.5);
+        masterGain.gain.exponentialRampToValueAtTime(0.95, now + 0.4);
 
         phonkSource.start(0);
     }
