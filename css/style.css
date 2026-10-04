@@ -1264,9 +1264,16 @@ body {
    ========================================================================== */
 .projects-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(440px, 1fr));
-    gap: 2.5rem;
+    grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+    gap: 2.2rem;
     margin-top: 1rem;
+}
+
+@media (min-width: 1150px) {
+    .projects-grid {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 2rem;
+    }
 }
 
 .project-card {
@@ -1497,13 +1504,36 @@ body {
     background: #0d030b;
     border: 1px solid var(--border-glow);
     border-radius: 24px;
-    overflow-y: auto;
-    overflow-x: hidden;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
     box-shadow: 0 25px 80px rgba(0, 0, 0, 0.95), 0 0 50px rgba(255, 0, 60, 0.2);
     transform: scale(0.92) translateY(20px);
     transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-    scrollbar-width: none;
-    -ms-overflow-style: none;
+    scrollbar-width: thin !important;
+    scrollbar-color: #ff003c rgba(20, 5, 14, 0.8) !important;
+}
+
+.modal-container::-webkit-scrollbar {
+    display: block !important;
+    width: 6px !important;
+}
+
+.modal-container::-webkit-scrollbar-track {
+    background: rgba(13, 3, 11, 0.9) !important;
+    border-radius: 8px !important;
+}
+
+.modal-container::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, #ff003c 0%, #800018 100%) !important;
+    border-radius: 8px !important;
+    border: 1px solid rgba(255, 255, 255, 0.15) !important;
+}
+
+.modal-container::-webkit-scrollbar-thumb:hover {
+    background: #ff003c !important;
+    box-shadow: 0 0 10px #ff003c !important;
 }
 
 .project-modal.active .modal-container {
@@ -2036,9 +2066,7 @@ html::-webkit-scrollbar,
 body::-webkit-scrollbar,
 div::-webkit-scrollbar,
 section::-webkit-scrollbar,
-main::-webkit-scrollbar,
-.modal-container::-webkit-scrollbar,
-.modal-body::-webkit-scrollbar {
+main::-webkit-scrollbar {
     display: none !important;
     width: 0px !important;
     height: 0px !important;

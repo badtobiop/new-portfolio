@@ -262,7 +262,7 @@
                                     <span class="stat-label">MONTHS CODING</span>
                                 </div>
                                 <div class="stat-box">
-                                    <span class="stat-number">2</span>
+                                    <span class="stat-number">3</span>
                                     <span class="stat-label">PROJECTS SHIPPED</span>
                                 </div>
                                 <div class="stat-box">
@@ -449,14 +449,58 @@
                             </div>
                         </div>
                     </div>
+
+                    <!-- Project 3: TradeMatrix AI — Trading Journal & Strategy Terminal -->
+                    <div class="project-card glass-card" data-project="tradematrix" tabindex="0">
+                        <div class="project-thumb">
+                            <img src="assets/images/tradematrix.jpg" alt="TradeMatrix AI Trading Analytics Terminal Preview" loading="lazy">
+                            <div class="project-overlay-badge">
+                                <i class="fa-solid fa-chart-line"></i>
+                                <span>AI COPILOT &bull; HUMAN ARCHITECTED</span>
+                            </div>
+                        </div>
+                        <div class="project-card-body">
+                            <div class="project-header">
+                                <span class="project-code">FEATURED // 03</span>
+                                <div class="project-links">
+                                    <a href="https://github.com/badtobiop/treading-tracker" target="_blank" rel="noopener noreferrer" aria-label="GitHub Repository" title="GitHub Repository"><i class="fa-brands fa-github"></i></a>
+                                    <a href="https://treading-tracker.vercel.app/" target="_blank" rel="noopener noreferrer" aria-label="Live Demo" title="Open Live App"><i class="fa-solid fa-arrow-up-right-from-square"></i></a>
+                                </div>
+                            </div>
+                            <h3 class="project-title">TradeMatrix AI — Strategy Analytics Terminal</h3>
+                            <p class="project-desc">Institutional-grade trading journal and strategy analytics terminal conceived and architected under human direction. Features real-time conversational Gemini AI copilot, mathematical lot sizing, and Turso cloud database.</p>
+                            <div class="card-pills">
+                                <span>React &amp; Vite</span>
+                                <span>Gemini AI Copilot</span>
+                                <span>Turso Cloud DB</span>
+                                <span>Position Sizer</span>
+                                <span>Google OAuth</span>
+                                <span>Human Architected</span>
+                            </div>
+                            <div class="project-actions">
+                                <a href="https://treading-tracker.vercel.app/" target="_blank" rel="noopener noreferrer" class="proj-btn live-btn" onclick="event.stopPropagation();">
+                                    <span>Open Project</span>
+                                    <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                                </a>
+                                <a href="https://github.com/badtobiop/treading-tracker" target="_blank" rel="noopener noreferrer" class="proj-btn github-btn" onclick="event.stopPropagation();">
+                                    <i class="fa-brands fa-github"></i>
+                                    <span>GitHub</span>
+                                </a>
+                                <button type="button" class="proj-btn detail-btn" onclick="openProjectModal('tradematrix');">
+                                    <span>Details</span>
+                                    <i class="fa-solid fa-expand"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </section>
 
         <!-- ==================== PROJECT DETAILS MODAL ==================== -->
-        <div class="project-modal" id="projectModal" aria-hidden="true" role="dialog" aria-modal="true">
+        <div class="project-modal" id="projectModal" data-lenis-prevent="true" aria-hidden="true" role="dialog" aria-modal="true">
             <div class="modal-backdrop" id="modalBackdrop" onclick="closeProjectModal()"></div>
-            <div class="modal-container">
+            <div class="modal-container" id="modalContainer" data-lenis-prevent="true">
                 <button type="button" class="modal-close-btn" id="modalCloseBtn" onclick="closeProjectModal()" aria-label="Close modal">
                     <i class="fa-solid fa-xmark"></i>
                 </button>
@@ -624,6 +668,102 @@
                         <a href="https://money-monitor-ashen.vercel.app/" target="_blank" rel="noopener noreferrer" class="modal-btn modal-btn-primary">
                             <span>Launch Aura AI Live</span>
                             <i class="fa-solid fa-arrow-right"></i>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- ==================== TRADEMATRIX AI MODAL CONTENT ==================== -->
+                <div class="modal-body modal-project-content" id="modal-content-tradematrix" style="display: none;">
+                    <div class="modal-hero">
+                        <img src="assets/images/tradematrix.jpg" alt="TradeMatrix AI Trading Terminal Hero" class="modal-hero-img">
+                        <div class="modal-hero-overlay">
+                            <div class="modal-pill"><i class="fa-solid fa-brain"></i> AI-Engineered &bull; Conceived by Human Intellect</div>
+                            <h2 class="modal-title">TradeMatrix AI — Strategy Analytics &amp; Trading Journal Terminal</h2>
+                            <p class="modal-subtitle">Institutional-grade trade journaling, mathematical lot sizing, and conversational Gemini AI copilot — conceived, directed &amp; architected by Utkarsh Dhakane, built leveraging modern AI-assisted engineering.</p>
+                            <div class="modal-hero-actions">
+                                <a href="https://treading-tracker.vercel.app/" target="_blank" rel="noopener noreferrer" class="modal-btn modal-btn-primary">
+                                    <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                                    <span>Open Live Terminal</span>
+                                </a>
+                                <a href="https://github.com/badtobiop/treading-tracker" target="_blank" rel="noopener noreferrer" class="modal-btn modal-btn-secondary">
+                                    <i class="fa-brands fa-github"></i>
+                                    <span>GitHub Repository</span>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="modal-details-grid">
+                        <div class="detail-card">
+                            <div class="detail-card-header">
+                                <div class="detail-icon"><i class="fa-solid fa-layer-group"></i></div>
+                                <div>
+                                    <h3>Project Features &amp; System Capabilities</h3>
+                                    <span class="detail-subhead">Key institutional modules and algorithmic architecture</span>
+                                </div>
+                            </div>
+                            <ul class="features-list">
+                                <li>
+                                    <i class="fa-solid fa-circle-check"></i>
+                                    <div>
+                                        <strong>Gemini AI Conversational Copilot &amp; Execution Dictation</strong>
+                                        <p>Real-time AI mentor with conversational memory and context awareness. Traders can dictate trade setups in natural language (English or Hinglish), query past performance ("What was my highest win-rate setup?"), and receive actionable edge evaluations.</p>
+                                    </div>
+                                </li>
+                                <li>
+                                    <i class="fa-solid fa-circle-check"></i>
+                                    <div>
+                                        <strong>Mathematical Position Sizing &amp; Lot Calculator</strong>
+                                        <p>Dynamic risk engine calculating exact lot and contract sizes across Nifty 50, Bank Nifty, Gold (XAU/USD), Forex pairs, and Cryptos based on account equity, custom risk percentages (1–2%), and stop-loss pip distances.</p>
+                                    </div>
+                                </li>
+                                <li>
+                                    <i class="fa-solid fa-circle-check"></i>
+                                    <div>
+                                        <strong>Institutional Trade Journaling &amp; Strategy Analytics</strong>
+                                        <p>Multi-asset trade execution logging with entry/exit timestamps, Risk-Reward Ratios (RRR), emotional tag classification (FOMO, Revenge, Discipline), and automated Win Rate, Profit Factor, and Expectancy computations.</p>
+                                    </div>
+                                </li>
+                                <li>
+                                    <i class="fa-solid fa-circle-check"></i>
+                                    <div>
+                                        <strong>Discretionary Leak Detector &amp; Behavioral Diagnostics</strong>
+                                        <p>Algorithmic scanner identifying behavioral leaks — flags revenge trading cascades, over-leveraging anomalies, and deviations from predefined risk rules to safeguard trading capital.</p>
+                                    </div>
+                                </li>
+                                <li>
+                                    <i class="fa-solid fa-database"></i>
+                                    <div>
+                                        <strong>Turso Distributed Cloud Database (LibSQL / SQLite on AWS Mumbai)</strong>
+                                        <p>Serverless edge database with automated schema migrations, sub-50ms ultra-low query latency, and instantaneous trade persistence.</p>
+                                    </div>
+                                </li>
+                                <li>
+                                    <i class="fa-solid fa-shield-halved"></i>
+                                    <div>
+                                        <strong>Enterprise Multi-Tenant Security &amp; Google OAuth 2.0 (GIS)</strong>
+                                        <p>Seamless one-tap Google Identity Services (GIS) Sign-In, Bcrypt salted password encryption, and multi-tenant authenticated user sessions.</p>
+                                    </div>
+                                </li>
+                                <li>
+                                    <i class="fa-solid fa-brain"></i>
+                                    <div>
+                                        <strong>Human Architectural Vision &bull; AI-Powered Execution</strong>
+                                        <p>Conceived, designed, and architected end-to-end by Utkarsh Dhakane using domain trading logic and rigorous prompt engineering, leveraging AI agent pair-programming for high-velocity software production.</p>
+                                    </div>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="modal-footer">
+                        <a href="https://treading-tracker.vercel.app/" target="_blank" rel="noopener noreferrer" class="modal-btn modal-btn-primary">
+                            <span>Launch TradeMatrix AI Live</span>
+                            <i class="fa-solid fa-arrow-right"></i>
+                        </a>
+                        <a href="https://github.com/badtobiop/treading-tracker" target="_blank" rel="noopener noreferrer" class="modal-btn modal-btn-secondary">
+                            <i class="fa-brands fa-github"></i>
+                            <span>GitHub Repository</span>
                         </a>
                     </div>
                 </div>

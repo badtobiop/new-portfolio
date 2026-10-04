@@ -595,6 +595,11 @@ window.openProjectModal = function(projectId) {
         targetContent.style.display = 'block';
     }
 
+    const container = modal.querySelector('.modal-container');
+    if (container) {
+        container.scrollTop = 0;
+    }
+
     modal.classList.add('active');
     modal.setAttribute('aria-hidden', 'false');
     document.body.style.overflow = 'hidden';
@@ -613,14 +618,45 @@ window.closeProjectModal = function() {
 
 document.addEventListener('DOMContentLoaded', () => {
     const modal = document.getElementById('projectModal');
-    const closeBtn = document.getElementById('modalCloseBtn') || document.getElementById('modal-close-btn') || document.querySelector('.modal-close-btn');
-    const backdrop = document.getElementById('modalBackdrop') || document.getElementById('modal-backdrop') || document.querySelector('.modal-backdrop');
+    if (!modal) return;
+    const closeBtn = document.getElementById('modalCloseBtn') || document.querySelector('.modal-close-btn');
+    const backdrop = document.getElementById('modalBackdrop') || document.querySelector('.modal-backdrop');
+    const container = modal.querySelector('.modal-container');
 
     if (closeBtn) closeBtn.addEventListener('click', window.closeProjectModal);
     if (backdrop) backdrop.addEventListener('click', window.closeProjectModal);
 
+    // Guarantee mousewheel scrolling inside modal container and prevent outer page lock
+    if (container) {
+        container.addEventListener('wheel', (e) => {
+            e.stopPropagation();
+            container.scrollTop += e.deltaY;
+            e.preventDefault();
+        }, { passive: false });
+
+        container.addEventListener('touchmove', (e) => {
+            e.stopPropagation();
+        }, { passive: true });
+    }
+
     window.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape') window.closeProjectModal();
+        if (e.key === 'Escape') {
+            window.closeProjectModal();
+        } else if (modal.classList.contains('active') && container) {
+            if (e.key === 'ArrowDown') {
+                container.scrollTop += 60;
+                e.preventDefault();
+            } else if (e.key === 'ArrowUp') {
+                container.scrollTop -= 60;
+                e.preventDefault();
+            } else if (e.key === 'PageDown' || (e.key === ' ' && !e.target.matches('input, textarea'))) {
+                container.scrollTop += container.clientHeight * 0.8;
+                e.preventDefault();
+            } else if (e.key === 'PageUp') {
+                container.scrollTop -= container.clientHeight * 0.8;
+                e.preventDefault();
+            }
+        }
     });
 });
 

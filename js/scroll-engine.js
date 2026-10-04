@@ -258,14 +258,48 @@
         });
 
         // ==========================================
-        // SECTION 3: PROJECTS
-        // Left Card: Lunar Habit Tracker (slides from left)
-        // Right Card: Aura AI Expense Monitor (slides from right)
+        // SECTION 3: PROJECTS (Dynamic Staggered Card Reveal)
         // ==========================================
         createSectionTimeline({
             sectionId: 'projects',
-            leftSelector: '.project-card[data-project="habit-tracker"]',
-            rightSelector: '.project-card[data-project="aura-ai"]'
+            customBuilder: (timeline, section) => {
+                const headings = section.querySelectorAll('.section-tag, .section-title');
+                const projectCards = section.querySelectorAll('.project-card');
+
+                // Entrance Phase (Progress: 0.00 -> 0.28)
+                if (headings.length > 0) {
+                    timeline.fromTo(headings,
+                        { opacity: 0, y: 35 },
+                        { opacity: 1, y: 0, duration: 0.24, ease: 'power2.out', stagger: 0.04 },
+                        0
+                    );
+                }
+
+                if (projectCards.length > 0) {
+                    timeline.fromTo(projectCards,
+                        { opacity: 0, y: 70, scale: 0.94 },
+                        { opacity: 1, y: 0, scale: 1.0, duration: 0.28, ease: 'power2.out', stagger: 0.08 },
+                        0.04
+                    );
+                }
+
+                // Reading Hold Phase (0.28 -> 0.72)
+
+                // Exit Phase (0.72 -> 1.00)
+                if (headings.length > 0) {
+                    timeline.to(headings,
+                        { opacity: 0, y: -35, duration: 0.24, ease: 'power2.in', stagger: 0.04 },
+                        0.75
+                    );
+                }
+
+                if (projectCards.length > 0) {
+                    timeline.to(projectCards,
+                        { opacity: 0, y: -60, scale: 0.95, duration: 0.26, ease: 'power2.in', stagger: 0.05 },
+                        0.74
+                    );
+                }
+            }
         });
 
         // ==========================================
