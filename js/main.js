@@ -578,8 +578,46 @@ window.toggleAboutCard = toggleAboutCard;
 
 
 // ==========================================================================
-// PROJECT DETAILS MODAL CONTROLLER
+// PROJECT DETAILS MODAL & LENIS SMOOTH SCROLL CONTROLLER
 // ==========================================================================
+let modalLenis = null;
+
+function getModalLenis() {
+    if (modalLenis) return modalLenis;
+
+    const container = document.getElementById('modalContainer');
+    const content = document.getElementById('modalScrollTrack') || (container ? container.firstElementChild : null);
+    if (!container || !content || typeof Lenis === 'undefined') return null;
+
+    modalLenis = new Lenis({
+        wrapper: container,
+        content: content,
+        eventsTarget: container,
+        duration: 1.2,
+        easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+        orientation: 'vertical',
+        gestureOrientation: 'vertical',
+        smoothWheel: true,
+        wheelMultiplier: 1.05,
+        touchMultiplier: 1.5,
+        infinite: false,
+        autoResize: true
+    });
+
+    window.modalLenis = modalLenis;
+
+    // Connect to dedicated requestAnimationFrame loop
+    function modalRafLoop(time) {
+        if (modalLenis) {
+            modalLenis.raf(time);
+        }
+        requestAnimationFrame(modalRafLoop);
+    }
+    requestAnimationFrame(modalRafLoop);
+
+    return modalLenis;
+}
+
 window.openProjectModal = function(projectId) {
     const modal = document.getElementById('projectModal');
     if (!modal) return;
@@ -595,7 +633,7 @@ window.openProjectModal = function(projectId) {
         targetContent.style.display = 'block';
     }
 
-    const container = modal.querySelector('.modal-container');
+    const container = document.getElementById('modalContainer');
     if (container) {
         container.scrollTop = 0;
     }
@@ -603,7 +641,25 @@ window.openProjectModal = function(projectId) {
     modal.classList.add('active');
     modal.setAttribute('aria-hidden', 'false');
     document.body.style.overflow = 'hidden';
-    if (window.lenis) window.lenis.stop();
+
+    // Stop background page Lenis so main page doesn't move
+    if (window.lenis) {
+        window.lenis.stop();
+    }
+
+    // Start / sync modal Lenis
+    const mLenis = getModalLenis();
+    if (mLenis) {
+        mLenis.start();
+        mLenis.resize();
+        mLenis.scrollTo(0, { immediate: true });
+        requestAnimationFrame(() => {
+            if (mLenis) {
+                mLenis.resize();
+                mLenis.scrollTo(0, { immediate: true });
+            }
+        });
+    }
 };
 
 window.closeProjectModal = function() {
@@ -613,7 +669,16 @@ window.closeProjectModal = function() {
     modal.classList.remove('active');
     modal.setAttribute('aria-hidden', 'true');
     document.body.style.overflow = '';
-    if (window.lenis) window.lenis.start();
+
+    // Stop modal Lenis
+    if (modalLenis) {
+        modalLenis.stop();
+    }
+
+    // Resume background page Lenis
+    if (window.lenis) {
+        window.lenis.start();
+    }
 };
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -621,39 +686,57 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!modal) return;
     const closeBtn = document.getElementById('modalCloseBtn') || document.querySelector('.modal-close-btn');
     const backdrop = document.getElementById('modalBackdrop') || document.querySelector('.modal-backdrop');
-    const container = modal.querySelector('.modal-container');
 
     if (closeBtn) closeBtn.addEventListener('click', window.closeProjectModal);
     if (backdrop) backdrop.addEventListener('click', window.closeProjectModal);
 
-    // Guarantee mousewheel scrolling inside modal container and prevent outer page lock
-    if (container) {
-        container.addEventListener('wheel', (e) => {
-            e.stopPropagation();
-            container.scrollTop += e.deltaY;
-            e.preventDefault();
-        }, { passive: false });
+    // Stop wheel/touch event propagation from modal backdrop to window (protecting main page scroll)
+    modal.addEventListener('wheel', (e) => {
+        e.stopPropagation();
+    }, { passive: false });
 
-        container.addEventListener('touchmove', (e) => {
-            e.stopPropagation();
-        }, { passive: true });
-    }
+    modal.addEventListener('touchmove', (e) => {
+        e.stopPropagation();
+    }, { passive: true });
 
     window.addEventListener('keydown', (e) => {
         if (e.key === 'Escape') {
             window.closeProjectModal();
-        } else if (modal.classList.contains('active') && container) {
+            return;
+        }
+
+        if (modal.classList.contains('active')) {
+            const mLenis = modalLenis || getModalLenis();
+            const container = document.getElementById('modalContainer');
+            if (!container) return;
+
             if (e.key === 'ArrowDown') {
-                container.scrollTop += 60;
+                if (mLenis) {
+                    mLenis.scrollTo(container.scrollTop + 140, { duration: 0.4 });
+                } else {
+                    container.scrollTop += 140;
+                }
                 e.preventDefault();
             } else if (e.key === 'ArrowUp') {
-                container.scrollTop -= 60;
+                if (mLenis) {
+                    mLenis.scrollTo(container.scrollTop - 140, { duration: 0.4 });
+                } else {
+                    container.scrollTop -= 140;
+                }
                 e.preventDefault();
             } else if (e.key === 'PageDown' || (e.key === ' ' && !e.target.matches('input, textarea'))) {
-                container.scrollTop += container.clientHeight * 0.8;
+                if (mLenis) {
+                    mLenis.scrollTo(container.scrollTop + container.clientHeight * 0.8, { duration: 0.6 });
+                } else {
+                    container.scrollTop += container.clientHeight * 0.8;
+                }
                 e.preventDefault();
             } else if (e.key === 'PageUp') {
-                container.scrollTop -= container.clientHeight * 0.8;
+                if (mLenis) {
+                    mLenis.scrollTo(container.scrollTop - container.clientHeight * 0.8, { duration: 0.6 });
+                } else {
+                    container.scrollTop -= container.clientHeight * 0.8;
+                }
                 e.preventDefault();
             }
         }
