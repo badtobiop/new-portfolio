@@ -36,6 +36,8 @@ class GatekeeperWithCompanion {
         this.isInCorner = false;
         this.isDisposed = false;
         this.isHoveredAngry = false;
+        this.isArrivalAngry = false;
+        this.arrivalAngerTimeout = null;
 
         // Inactivity & Timing
         this.lastMouseMoveTime = performance.now();
@@ -258,11 +260,14 @@ class GatekeeperWithCompanion {
                     const dist = Math.hypot(rect.left - home.x, rect.top - home.y);
 
                     if (dist > 40) {
-                        // SASSY ATTITUDE RETURN WALK!
+                        // SASSY ATTITUDE RETURN WALK (text is hidden while returning!)
                         this.triggerSassyReturn(rect.left, rect.top, home);
                     } else {
                         this.resetToHomeCSS();
+                        if (this.bubble) this.bubble.classList.remove('bubble-hidden');
                     }
+                } else {
+                    if (this.bubble) this.bubble.classList.remove('bubble-hidden');
                 }
             }
         };
@@ -297,9 +302,15 @@ class GatekeeperWithCompanion {
                 const clientX = e.touches ? e.touches[0].clientX : e.clientX;
                 const clientY = e.touches ? e.touches[0].clientY : e.clientY;
 
+                if (this.arrivalAngerTimeout) {
+                    clearTimeout(this.arrivalAngerTimeout);
+                    this.arrivalAngerTimeout = null;
+                }
+                this.isArrivalAngry = false;
                 this.isDragging = true;
                 this.hasDragged = false;
                 this.companion.classList.add('dragging');
+                if (this.bubble) this.bubble.classList.add('bubble-hidden');
 
                 const rect = this.companion.getBoundingClientRect();
                 this.dragOffsetX = clientX - rect.left;
@@ -317,6 +328,7 @@ class GatekeeperWithCompanion {
                 this.isHoveredAngry = true;
                 this.companion.classList.add('angry');
                 if (this.bubble) {
+                    this.bubble.classList.remove('bubble-hidden');
                     this.bubble.classList.add('angry');
                     this.bubble.classList.remove('sass');
                     const randAngry = this.angryLines[Math.floor(Math.random() * this.angryLines.length)];
@@ -327,25 +339,27 @@ class GatekeeperWithCompanion {
             this.companion.addEventListener('mouseleave', () => {
                 if (this.isDragging || this.isWalkingHome) return;
                 this.isHoveredAngry = false;
-                this.companion.classList.remove('angry');
-                if (this.bubble) {
-                    this.bubble.classList.remove('angry');
-                    this.bubbleText.textContent = this.jokes[this.currentJokeIndex];
+                if (!this.isArrivalAngry) {
+                    this.companion.classList.remove('angry');
+                    if (this.bubble) {
+                        this.bubble.classList.remove('angry');
+                        this.bubbleText.textContent = this.jokes[this.currentJokeIndex];
+                    }
                 }
             });
 
-            // Click Companion -> NEXT JOKE (Only if not dragged)
+            // Click Companion -> NEXT JOKE (Only if not dragged or angry)
             this.companion.addEventListener('click', (e) => {
                 e.stopPropagation();
                 if (this.hasDragged || this.isWalkingHome) return;
-                if (this.isHoveredAngry) return;
+                if (this.isHoveredAngry || this.isArrivalAngry) return;
                 this.nextJoke();
             });
         }
     }
 
     // ==========================================================================
-    // SASSY ATTITUDE RETURN WALK ("I don't listen to anyone except Utkarsh!")
+    // SASSY ATTITUDE RETURN WALK (Text is hidden while returning!)
     // ==========================================================================
     triggerSassyReturn(fromX, fromY, home) {
         if (this.isWalkingHome) return;
@@ -353,24 +367,55 @@ class GatekeeperWithCompanion {
         this.walkStartPos = { x: fromX, y: fromY };
         this.walkTargetPos = home;
         this.walkElapsed = 0;
+        this.isTalking = false;
 
-        // Pick sassy line
+        // Hide speech bubble completely while returning home ("uska text gayab hoga")
+        if (this.bubble) {
+            this.bubble.classList.add('bubble-hidden');
+            this.bubble.classList.remove('angry', 'sass');
+        }
+    }
+
+    // ==========================================================================
+    // ARRIVAL AT HOME IN ANGER ("jab uski jaga pe ayegi tab bolegi gusse mai 3-4s")
+    // ==========================================================================
+    triggerArrivalAnger() {
+        this.isArrivalAngry = true;
+        if (this.companion) this.companion.classList.add('angry');
+
+        // Pick sassy angry scolding line
         const sassLine = this.dragSassLines[Math.floor(Math.random() * this.dragSassLines.length)];
         if (this.bubbleText) this.bubbleText.textContent = sassLine;
-        if (this.bubble) {
-            this.bubble.classList.add('sass');
-            this.bubble.classList.remove('angry');
-        }
-        this.isTalking = true;
-        this.talkTimer = 3.6;
 
-        // Pop scale bounce on bubble (clears transform on finish for razor-sharp text)
-        if (typeof gsap !== 'undefined' && this.bubble) {
-            gsap.fromTo(this.bubble,
-                { scale: 0.88, opacity: 0.7 },
-                { scale: 1.0, opacity: 1.0, duration: 0.35, ease: 'back.out(2)', clearProps: 'transform' }
-            );
+        if (this.bubble) {
+            this.bubble.classList.remove('bubble-hidden');
+            this.bubble.classList.add('angry');
+            this.bubble.classList.remove('sass');
+
+            // Pop scale bounce on bubble
+            if (typeof gsap !== 'undefined') {
+                gsap.fromTo(this.bubble,
+                    { scale: 0.65, opacity: 0 },
+                    { scale: 1.0, opacity: 1.0, duration: 0.35, ease: 'back.out(2)', clearProps: 'transform' }
+                );
+            }
         }
+
+        this.isTalking = true;
+        this.talkTimer = 3.5; // Speaks with animated mouth for 3.5s (3-4 seconds)
+
+        // After 3.5 seconds (3-4s), she calms down and returns to regular jokes
+        if (this.arrivalAngerTimeout) clearTimeout(this.arrivalAngerTimeout);
+        this.arrivalAngerTimeout = setTimeout(() => {
+            if (!this.isHoveredAngry && !this.isDragging && !this.isWalkingHome) {
+                this.isArrivalAngry = false;
+                if (this.companion) this.companion.classList.remove('angry');
+                if (this.bubble) {
+                    this.bubble.classList.remove('angry');
+                }
+                this.nextJoke(); // Automatically resumes normal friendly witty banter!
+            }
+        }, 3500); // 3.5s in anger
     }
 
     // ==========================================================================
@@ -441,6 +486,9 @@ class GatekeeperWithCompanion {
     setJoke(text) {
         if (!this.bubbleText) return;
         this.bubbleText.textContent = text;
+        if (this.bubble) {
+            this.bubble.classList.remove('bubble-hidden', 'angry', 'sass');
+        }
         this.isTalking = true;
         this.talkTimer = this.talkDuration;
 
@@ -579,8 +627,8 @@ class GatekeeperWithCompanion {
 
         ctx.clearRect(0, 0, w, h);
 
-        // Hover Angry State
-        const isAngry = this.isHoveredAngry;
+        // Hover Angry State OR Arrival Scolding Anger
+        const isAngry = this.isHoveredAngry || this.isArrivalAngry;
 
         // Circle Gradient (Pink vs Blood Red)
         const grad = ctx.createRadialGradient(cx - r * 0.2, cy - r * 0.25, 4, cx, cy, r);
@@ -856,18 +904,13 @@ class GatekeeperWithCompanion {
                     // Arrived back home!
                     this.isWalkingHome = false;
                     this.resetToHomeCSS();
-                    // User requested: "jab vo uske jaga pe ayegi to 2-3 sec mai vapis se pahle jaise bolna start kreggi"
-                    setTimeout(() => {
-                        if (this.bubble && !this.isHoveredAngry && !this.isDragging && !this.isWalkingHome) {
-                            this.bubble.classList.remove('sass');
-                            this.nextJoke(); // Starts speaking normal witty banter just like before!
-                        }
-                    }, 2500); // 2.5 seconds (2-3 sec)
+                    // User requested: "jab uski jaga pe ayegi tab bolegi gusse mai 3-4s"
+                    this.triggerArrivalAnger();
                 }
             }
 
-            // Companion Jokes Timing (Only when not hovered angry or dragging)
-            if (!this.isHoveredAngry && !this.isDragging && !this.isWalkingHome) {
+            // Companion Jokes Timing (Only when not angry or moving)
+            if (!this.isHoveredAngry && !this.isArrivalAngry && !this.isDragging && !this.isWalkingHome) {
                 this.jokeTimer += delta;
                 if (this.jokeTimer >= this.jokeInterval) {
                     this.nextJoke();
