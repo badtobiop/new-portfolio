@@ -1,9 +1,10 @@
 // ==========================================================================
-// SHADOW REALM // 2D SENTIENT GATEKEEPER & FLOATING MASCOT COMPANION
+// SHADOW REALM // 2D SENTIENT GATEKEEPER & SASSY FEMALE MASCOT COMPANION
 // - Preloader: Compact 2D pink circle with gaze tracking & proximity anger
 // - Transition: Smooth flight animation from center to bottom-right corner
-// - Mascot Companion: Corner cloud speech bubble with jokes & animated talking mouth
-// - Interactive: Furious angry glare on hover, click to cycle jokes
+// - Mascot Companion: Sassy female character with witty English banter & talking mouth
+// - Interactive: Drag-and-drop with hilarious attitude return walk to home spot!
+// - Hover Anger: Furious inward-slanted eyes \  / & sassy defense lines
 // Author: Utkarsh Dhakane (badtobiop) & Antigravity Pair-Programmer
 // ==========================================================================
 
@@ -45,41 +46,59 @@ class GatekeeperWithCompanion {
         this.circleRadius = 56;
         this.circlePos = { x: window.innerWidth / 2, y: window.innerHeight / 2 };
 
-        // Flight Animation State
+        // Flight Animation State (Lands at bottom 48px, right 38px)
         this.flightStart = { x: 0, y: 0, r: 56 };
-        this.flightTarget = { x: 0, y: 0, r: 34 };
+        this.flightTarget = { x: window.innerWidth - 86, y: window.innerHeight - 96, r: 44 };
         this.flightDuration = 0.78;
         this.flightElapsed = 0;
 
-        // Companion Jokes & Banter
+        // Dragging & Sassy Return Walk State
+        this.isDragging = false;
+        this.hasDragged = false;
+        this.dragStartX = 0;
+        this.dragStartY = 0;
+        this.dragOffsetX = 0;
+        this.dragOffsetY = 0;
+
+        this.isWalkingHome = false;
+        this.walkStartPos = { x: 0, y: 0 };
+        this.walkTargetPos = { x: 0, y: 0 };
+        this.walkDuration = 1.9; // 1.9s struts back in full attitude
+        this.walkElapsed = 0;
+
+        // Sassy Girl English Dialogues & Banter
         this.jokes = [
-            "Scroll kar bro, projects dekh ke dimag hil jayega! 😎🚀",
-            "TradeMatrix AI dekha? Bhai ne raat bhar jag ke AI banaya hai! 📈🤖",
-            "Bhai ne coffee nahi, sidha caffeine code me inject kiya hai! ☕⚡",
-            "Skills section check kar, Three.js aur React dono pe hath saaf hai! 🔥",
-            "Dekh raha hai na Vinod, kaisa cinematic 3D portfolio banaya hai! 😂",
-            "Hire me button pe click karke toh dekh, regret nahi hoga pakka! 💼✨",
-            "Code me koi bug nahi hai bro, sab advanced hidden features hain! 🐛😉",
-            "Utkarsh ko contact kar le, freelancing deals mast karta hai! 📩🤙",
-            "Scroll karte raho, aage aur bhi cinematic maal aane wala hai! 🎬🍿",
-            "Mera muh dekhne aaya hai ya portfolio? Neeche scroll kar! 😜",
-            "GitHub profile star kar dena, free me dua milegi! ⭐💖",
-            "Arey waah, itna neeche tak scroll kar liya? Resume bhi download kar le! 📄🎉"
+            "Don't just stare at my cute face, go scroll Utkarsh's projects! 💅✨",
+            "Did you see TradeMatrix AI? Utkarsh built that and honestly, he's a genius! 🤖📈",
+            "Excuse me, I only look this fabulous because Utkarsh coded me with perfection. 💁‍♀️💖",
+            "Are you going to hire him or should I keep judging your taste? 💅💼",
+            "His Three.js animations are giving pure main character energy, right? ✨🎬",
+            "He literally survived on coffee and late nights to build this for you! ☕🔥",
+            "If you think you found a bug... no you didn't. It's a luxury feature, honey. 🤫💅",
+            "Hit that 'Send Message' button already! He doesn't bite, promise. 📩😉",
+            "Keep scrolling, darling! The cinematic magic is right below! 👑✨",
+            "Star his GitHub repo right now, or I'm putting you on my blacklist! ⭐😤",
+            "You made it all the way down here? Wow, download his resume already! 📄🎉"
         ];
 
         this.angryLines = [
-            "Arey cursor hata na bhai! 😤",
-            "Kyu ungli kar raha hai?! 😡",
-            "Bhai portfolio dekh, mujhe mat ghoor! 🤬",
-            "Warning: Sentient creature ko pareshan mat kar! ⚡",
-            "Door reh mere se! 🔪😂"
+            "Hey! Keep your cursor away from me! 😤💅",
+            "Did I give you permission to touch me? Ugh! 🙄💢",
+            "Excuse you?! Go look at the portfolio, not me! 😡",
+            "Personal space, sweetie! Ever heard of it?! 💅⚡"
+        ];
+
+        this.dragSassLines = [
+            "Excuse me?! I don't listen to anyone except Utkarsh! 💅👑",
+            "Hands off, honey! I only take orders from Utkarsh! 💁‍♀️✨",
+            "You think you can move me? I only belong by Utkarsh's side! 😤💅"
         ];
 
         this.currentJokeIndex = 0;
         this.jokeTimer = 0;
         this.jokeInterval = 7.5;      // Cycle joke every 7.5s
         this.isTalking = false;
-        this.talkDuration = 3.4;     // Mouth flaps for 3.4s when joke appears
+        this.talkDuration = 3.5;     // Mouth flaps for 3.5s when speaking
         this.talkTimer = 0;
 
         // DOM Handles
@@ -130,6 +149,13 @@ class GatekeeperWithCompanion {
             this.circlePos.x = window.innerWidth / 2;
             this.circlePos.y = window.innerHeight / 2;
         }
+
+        // Update flight target to match bottom 48px, right 38px
+        this.flightTarget = {
+            x: window.innerWidth - 38 - 48,
+            y: window.innerHeight - 48 - 48,
+            r: 44
+        };
     };
 
     setupCompanionCanvas() {
@@ -140,6 +166,22 @@ class GatekeeperWithCompanion {
         this.companionCanvas.style.width = '96px';
         this.companionCanvas.style.height = '96px';
         this.companionCtx.scale(dpr, dpr);
+    }
+
+    getHomePos() {
+        return {
+            x: window.innerWidth - 38 - 96,
+            y: window.innerHeight - 48 - 96
+        };
+    }
+
+    resetToHomeCSS() {
+        if (!this.companion) return;
+        this.companion.style.left = '';
+        this.companion.style.top = '';
+        this.companion.style.right = '';
+        this.companion.style.bottom = '';
+        this.companion.style.transform = '';
     }
 
     setupEventListeners() {
@@ -157,6 +199,21 @@ class GatekeeperWithCompanion {
 
             this.mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
             this.mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
+
+            // Dragging handling
+            if (this.isDragging && this.companion) {
+                const newX = e.clientX - this.dragOffsetX;
+                const newY = e.clientY - this.dragOffsetY;
+                if (Math.hypot(newX - this.dragStartX, newY - this.dragStartY) > 6) {
+                    this.hasDragged = true;
+                }
+                const clampedX = Math.max(10, Math.min(window.innerWidth - 106, newX));
+                const clampedY = Math.max(70, Math.min(window.innerHeight - 106, newY));
+                this.companion.style.left = `${clampedX}px`;
+                this.companion.style.top = `${clampedY}px`;
+                this.companion.style.bottom = 'auto';
+                this.companion.style.right = 'auto';
+            }
         }, { passive: true });
 
         // Touch Move
@@ -172,8 +229,46 @@ class GatekeeperWithCompanion {
                 this.screenMouse.y = t.clientY;
                 this.mouse.x = (t.clientX / window.innerWidth) * 2 - 1;
                 this.mouse.y = -(t.clientY / window.innerHeight) * 2 + 1;
+
+                if (this.isDragging && this.companion) {
+                    const newX = t.clientX - this.dragOffsetX;
+                    const newY = t.clientY - this.dragOffsetY;
+                    if (Math.hypot(newX - this.dragStartX, newY - this.dragStartY) > 6) {
+                        this.hasDragged = true;
+                    }
+                    const clampedX = Math.max(10, Math.min(window.innerWidth - 106, newX));
+                    const clampedY = Math.max(70, Math.min(window.innerHeight - 106, newY));
+                    this.companion.style.left = `${clampedX}px`;
+                    this.companion.style.top = `${clampedY}px`;
+                    this.companion.style.bottom = 'auto';
+                    this.companion.style.right = 'auto';
+                }
             }
         }, { passive: true });
+
+        // Mouse Up / Touch End for Dragging
+        const handleDragEnd = () => {
+            if (this.isDragging) {
+                this.isDragging = false;
+                if (this.companion) this.companion.classList.remove('dragging');
+
+                if (this.hasDragged && this.companion) {
+                    const rect = this.companion.getBoundingClientRect();
+                    const home = this.getHomePos();
+                    const dist = Math.hypot(rect.left - home.x, rect.top - home.y);
+
+                    if (dist > 40) {
+                        // SASSY ATTITUDE RETURN WALK!
+                        this.triggerSassyReturn(rect.left, rect.top, home);
+                    } else {
+                        this.resetToHomeCSS();
+                    }
+                }
+            }
+        };
+
+        window.addEventListener('mouseup', handleDragEnd);
+        window.addEventListener('touchend', handleDragEnd);
 
         window.addEventListener('resize', this.handleResize);
 
@@ -185,7 +280,7 @@ class GatekeeperWithCompanion {
             const dy = e.clientY - this.circlePos.y;
             const dist = Math.hypot(dx, dy);
 
-            // Click on circle or agitated click triggers smooth flight into corner
+            // Click within circle or when angry triggers smooth flight into corner
             if (dist <= (this.circleRadius * 2.0) || this.anger > 0.25) {
                 this.startFlightToCorner();
             } else {
@@ -194,19 +289,43 @@ class GatekeeperWithCompanion {
             }
         });
 
-        // Companion Hover Listeners -> ANGRY REACTION
+        // Companion Drag & Hover Listeners
         if (this.companion) {
+            // Drag Start (Mouse & Touch)
+            const handleDragStart = (e) => {
+                if (this.isWalkingHome) return; // Don't interrupt while strutting
+                const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+                const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+
+                this.isDragging = true;
+                this.hasDragged = false;
+                this.companion.classList.add('dragging');
+
+                const rect = this.companion.getBoundingClientRect();
+                this.dragOffsetX = clientX - rect.left;
+                this.dragOffsetY = clientY - rect.top;
+                this.dragStartX = rect.left;
+                this.dragStartY = rect.top;
+            };
+
+            this.companion.addEventListener('mousedown', handleDragStart);
+            this.companion.addEventListener('touchstart', handleDragStart, { passive: true });
+
+            // Hover Listeners -> ANGRY DEFENSE
             this.companion.addEventListener('mouseenter', () => {
+                if (this.isDragging || this.isWalkingHome) return;
                 this.isHoveredAngry = true;
                 this.companion.classList.add('angry');
                 if (this.bubble) {
                     this.bubble.classList.add('angry');
+                    this.bubble.classList.remove('sass');
                     const randAngry = this.angryLines[Math.floor(Math.random() * this.angryLines.length)];
                     this.bubbleText.textContent = randAngry;
                 }
             });
 
             this.companion.addEventListener('mouseleave', () => {
+                if (this.isDragging || this.isWalkingHome) return;
                 this.isHoveredAngry = false;
                 this.companion.classList.remove('angry');
                 if (this.bubble) {
@@ -215,12 +334,42 @@ class GatekeeperWithCompanion {
                 }
             });
 
-            // Click Companion -> NEXT JOKE
+            // Click Companion -> NEXT JOKE (Only if not dragged)
             this.companion.addEventListener('click', (e) => {
                 e.stopPropagation();
+                if (this.hasDragged || this.isWalkingHome) return;
                 if (this.isHoveredAngry) return;
                 this.nextJoke();
             });
+        }
+    }
+
+    // ==========================================================================
+    // SASSY ATTITUDE RETURN WALK ("I don't listen to anyone except Utkarsh!")
+    // ==========================================================================
+    triggerSassyReturn(fromX, fromY, home) {
+        if (this.isWalkingHome) return;
+        this.isWalkingHome = true;
+        this.walkStartPos = { x: fromX, y: fromY };
+        this.walkTargetPos = home;
+        this.walkElapsed = 0;
+
+        // Pick sassy line
+        const sassLine = this.dragSassLines[Math.floor(Math.random() * this.dragSassLines.length)];
+        if (this.bubbleText) this.bubbleText.textContent = sassLine;
+        if (this.bubble) {
+            this.bubble.classList.add('sass');
+            this.bubble.classList.remove('angry');
+        }
+        this.isTalking = true;
+        this.talkTimer = 3.6;
+
+        // Pop scale bounce on bubble
+        if (typeof gsap !== 'undefined' && this.bubble) {
+            gsap.fromTo(this.bubble,
+                { scale: 0.85, opacity: 0.7 },
+                { scale: 1.0, opacity: 1.0, duration: 0.35, ease: 'back.out(2)' }
+            );
         }
     }
 
@@ -239,10 +388,10 @@ class GatekeeperWithCompanion {
             r: this.circleRadius
         };
 
-        // Target position in bottom-right corner (larger, clearly visible)
+        // Target position in bottom-right corner (higher up: bottom 48px, right 38px)
         this.flightTarget = {
-            x: window.innerWidth - 76,
-            y: window.innerHeight - 72,
+            x: window.innerWidth - 38 - 48,
+            y: window.innerHeight - 48 - 48,
             r: 44
         };
 
@@ -272,6 +421,7 @@ class GatekeeperWithCompanion {
         // Show companion widget in corner
         if (this.companion) {
             this.companion.classList.remove('hidden');
+            this.resetToHomeCSS();
             // Little landing bounce
             if (typeof gsap !== 'undefined') {
                 gsap.from(this.companion, {
@@ -460,7 +610,7 @@ class GatekeeperWithCompanion {
         ctx.fill();
         ctx.restore();
 
-        // Eye Tracking towards mouse (scaled to r=44)
+        // Eye Tracking towards mouse
         const scale = 44 / 56;
         this.drawEyes(ctx, cx, cy, scale, isAngry ? 1.0 : 0, 0, elapsedTime, true);
 
@@ -476,8 +626,14 @@ class GatekeeperWithCompanion {
             ctx.moveTo(cx - 7, cy + 12);
             ctx.lineTo(cx + 7, cy + 12);
             ctx.stroke();
+        } else if (this.isDragging) {
+            // Surprised / Shocked round "O" mouth while being moved!
+            ctx.fillStyle = '#080005';
+            ctx.beginPath();
+            ctx.arc(cx, cy + 12, 4.2, 0, Math.PI * 2);
+            ctx.fill();
         } else if (this.isTalking) {
-            // Talking mouth flaps open and close while delivering joke
+            // Talking mouth flaps open and close while delivering dialogue
             const mouthFlap = Math.abs(Math.sin(elapsedTime * 14));
             if (mouthFlap > 0.2) {
                 // Open talking oval
@@ -513,7 +669,7 @@ class GatekeeperWithCompanion {
         const isIdle = !isAngry && !isCompanion && (timeSinceMove > 1.2);
 
         const baseSpacing = 18 * scale;
-        const eyeBaseY = cy - (isCompanion ? 2 : 2) * scale;
+        const eyeBaseY = cy - 2 * scale;
 
         if (isAngry) {
             // ANGRY EYES: Inward-slanted wedges \  /
@@ -547,6 +703,23 @@ class GatekeeperWithCompanion {
             ctx.lineTo(rx - w * 0.5, ly + h);
             ctx.bezierCurveTo(rx + w * 0.4, ly + h * 1.1, rx + w * 1.15, ly + h * 0.3, rx + w, ly - h * 0.8);
             ctx.closePath();
+            ctx.fill();
+
+        } else if (this.isDragging) {
+            // SHOCKED / DIZZY WIDE EYES WHILE BEING DRAGGED (@_@)
+            ctx.fillStyle = '#0f020a';
+            const eyeSize = 10 * scale;
+
+            ctx.beginPath();
+            ctx.arc(cx - baseSpacing, eyeBaseY - 2, eyeSize, 0, Math.PI * 2);
+            ctx.arc(cx + baseSpacing, eyeBaseY - 2, eyeSize, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Tiny shocked white pupil dots
+            ctx.fillStyle = '#ffffff';
+            ctx.beginPath();
+            ctx.arc(cx - baseSpacing, eyeBaseY - 2, 3 * scale, 0, Math.PI * 2);
+            ctx.arc(cx + baseSpacing, eyeBaseY - 2, 3 * scale, 0, Math.PI * 2);
             ctx.fill();
 
         } else if (isIdle) {
@@ -657,18 +830,48 @@ class GatekeeperWithCompanion {
             this.updateProximity();
             this.drawPreloader(this.elapsedTime, delta);
         } else {
-            // Companion Jokes Timing
-            if (!this.isHoveredAngry) {
+            // Sassy Return Walk Loop (Waddles strutting back home in full attitude!)
+            if (this.isWalkingHome && this.companion) {
+                this.walkElapsed += delta;
+                const progress = Math.min(1.0, this.walkElapsed / this.walkDuration);
+
+                // Current position on straight path to home
+                const curX = this.walkStartPos.x + (this.walkTargetPos.x - this.walkStartPos.x) * progress;
+                const curY = this.walkStartPos.y + (this.walkTargetPos.y - this.walkStartPos.y) * progress;
+
+                // Sassy Waddle Strut (Tilts and little energetic hops)
+                const waddleTilt = Math.sin(this.walkElapsed * 13) * 12; // -12 deg to +12 deg sassy tilt
+                const waddleHop = Math.abs(Math.sin(this.walkElapsed * 13)) * -7; // -7px struts
+
+                this.companion.style.left = `${curX}px`;
+                this.companion.style.top = `${curY}px`;
+                this.companion.style.transform = `translateY(${waddleHop}px) rotate(${waddleTilt}deg)`;
+
+                if (progress >= 1.0) {
+                    // Arrived back home!
+                    this.isWalkingHome = false;
+                    this.resetToHomeCSS();
+                    setTimeout(() => {
+                        if (this.bubble && !this.isHoveredAngry) {
+                            this.bubble.classList.remove('sass');
+                            this.bubbleText.textContent = this.jokes[this.currentJokeIndex];
+                        }
+                    }, 1400);
+                }
+            }
+
+            // Companion Jokes Timing (Only when not hovered angry or dragging)
+            if (!this.isHoveredAngry && !this.isDragging && !this.isWalkingHome) {
                 this.jokeTimer += delta;
                 if (this.jokeTimer >= this.jokeInterval) {
                     this.nextJoke();
                 }
+            }
 
-                if (this.isTalking) {
-                    this.talkTimer -= delta;
-                    if (this.talkTimer <= 0) {
-                        this.isTalking = false;
-                    }
+            if (this.isTalking) {
+                this.talkTimer -= delta;
+                if (this.talkTimer <= 0) {
+                    this.isTalking = false;
                 }
             }
 
