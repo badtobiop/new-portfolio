@@ -1,12 +1,15 @@
 // ==========================================================================
-// SHADOW REALM // 2D SENTIENT CURSED GATEKEEPER PRELOADER
-// Interactive 2D Compact Emoji Creature: Cursor Tracking, Proximity Anger & Shatter
-// Pure 2D Canvas: Compact Pink Circle, Eyes Only, No Mouth, No Borders
+// SHADOW REALM // 2D SENTIENT GATEKEEPER & FLOATING MASCOT COMPANION
+// - Preloader: Compact 2D pink circle with gaze tracking & proximity anger
+// - Transition: Smooth flight animation from center to bottom-right corner
+// - Mascot Companion: Corner cloud speech bubble with jokes & animated talking mouth
+// - Interactive: Furious angry glare on hover, click to cycle jokes
 // Author: Utkarsh Dhakane (badtobiop) & Antigravity Pair-Programmer
 // ==========================================================================
 
-class Gatekeeper2D {
+class GatekeeperWithCompanion {
     constructor() {
+        // Preloader Screen Handles
         this.screen = document.getElementById('gatekeeper-screen');
         this.canvas = document.getElementById('gatekeeper-canvas');
         if (!this.screen || !this.canvas) return;
@@ -14,26 +17,70 @@ class Gatekeeper2D {
         this.ctx = this.canvas.getContext('2d');
         if (!this.ctx) return;
 
+        // Companion DOM Handles
+        this.companion = document.getElementById('mascotCompanion');
+        this.companionCanvas = document.getElementById('mascotCanvas');
+        this.bubble = document.getElementById('mascotCloudBubble');
+        this.bubbleText = document.getElementById('mascotBubbleText');
+        this.companionCtx = this.companionCanvas ? this.companionCanvas.getContext('2d') : null;
+
         // Interactive Tracking State
         this.mouse = { x: 0, y: 0 };           // Normalized (-1 to 1)
-        this.targetMouse = { x: 0, y: 0 };
         this.screenMouse = { x: window.innerWidth / 2, y: window.innerHeight / 2 };
-        this.anger = 0;                         // 0.0 (Cute Rose Pink) -> 1.0 (Blazing Blood Red Rage)
+        this.anger = 0;                         // 0.0 (Cute Pink) -> 1.0 (Blood Red)
         this.targetAnger = 0;
-        this.isExploding = false;
-        this.isDisposed = false;
 
-        // Inactivity & Mood State
+        // State Flags
+        this.isTransitioning = false;
+        this.isInCorner = false;
+        this.isDisposed = false;
+        this.isHoveredAngry = false;
+
+        // Inactivity & Timing
         this.lastMouseMoveTime = performance.now();
         this.isMouseMoving = false;
-        this.alertTimer = 0;                    // Pop alert eye expansion when cursor starts moving
+        this.alertTimer = 0;
 
-        // 2D Circle Size & Physics
-        this.circleRadius = 56;                 // Compact cute circle (112px diameter)
+        // Preloader Circle Size & Pos
+        this.circleRadius = 56;
         this.circlePos = { x: window.innerWidth / 2, y: window.innerHeight / 2 };
 
-        // 2D Explosion Particle Pool
-        this.particles = [];
+        // Flight Animation State
+        this.flightStart = { x: 0, y: 0, r: 56 };
+        this.flightTarget = { x: 0, y: 0, r: 34 };
+        this.flightDuration = 0.78;
+        this.flightElapsed = 0;
+
+        // Companion Jokes & Banter
+        this.jokes = [
+            "Scroll kar bro, projects dekh ke dimag hil jayega! 😎🚀",
+            "TradeMatrix AI dekha? Bhai ne raat bhar jag ke AI banaya hai! 📈🤖",
+            "Bhai ne coffee nahi, sidha caffeine code me inject kiya hai! ☕⚡",
+            "Skills section check kar, Three.js aur React dono pe hath saaf hai! 🔥",
+            "Dekh raha hai na Vinod, kaisa cinematic 3D portfolio banaya hai! 😂",
+            "Hire me button pe click karke toh dekh, regret nahi hoga pakka! 💼✨",
+            "Code me koi bug nahi hai bro, sab advanced hidden features hain! 🐛😉",
+            "Utkarsh ko contact kar le, freelancing deals mast karta hai! 📩🤙",
+            "Scroll karte raho, aage aur bhi cinematic maal aane wala hai! 🎬🍿",
+            "Mera muh dekhne aaya hai ya portfolio? Neeche scroll kar! 😜",
+            "GitHub profile star kar dena, free me dua milegi! ⭐💖",
+            "Arey waah, itna neeche tak scroll kar liya? Resume bhi download kar le! 📄🎉"
+        ];
+
+        this.angryLines = [
+            "Arey cursor hata na bhai! 😤",
+            "Kyu ungli kar raha hai?! 😡",
+            "Bhai portfolio dekh, mujhe mat ghoor! 🤬",
+            "Warning: Sentient creature ko pareshan mat kar! ⚡",
+            "Door reh mere se! 🔪😂"
+        ];
+
+        this.currentJokeIndex = 0;
+        this.jokeTimer = 0;
+        this.jokeInterval = 7.5;      // Cycle joke every 7.5s
+        this.isTalking = false;
+        this.talkDuration = 3.4;     // Mouth flaps for 3.4s when joke appears
+        this.talkTimer = 0;
 
         // DOM HUD Handles
         this.threatFill = document.getElementById('gatekeeperThreatFill');
@@ -47,21 +94,21 @@ class Gatekeeper2D {
         this.lastTime = performance.now();
         this.elapsedTime = 0;
 
-        // Audio Context
+        // Audio
         this.audioCtx = null;
 
         this.init();
     }
 
     init() {
-        // Lock body scrolling while gatekeeper is active
+        // Lock body scrolling while gatekeeper preloader is active
         document.body.style.overflow = 'hidden';
         if (window.lenis) {
             window.lenis.stop();
         } else {
             const checkLenis = setInterval(() => {
                 if (window.lenis) {
-                    if (!this.isDisposed) window.lenis.stop();
+                    if (!this.isDisposed && !this.isInCorner) window.lenis.stop();
                     clearInterval(checkLenis);
                 }
             }, 60);
@@ -70,12 +117,14 @@ class Gatekeeper2D {
 
         this.handleResize();
         this.setupEventListeners();
+        this.setupCompanionCanvas();
         this.animate();
     }
 
     handleResize = () => {
         if (this.isDisposed) return;
         const dpr = Math.min(window.devicePixelRatio || 1, 2.0);
+
         this.canvas.width = window.innerWidth * dpr;
         this.canvas.height = window.innerHeight * dpr;
         this.canvas.style.width = `${window.innerWidth}px`;
@@ -83,16 +132,28 @@ class Gatekeeper2D {
         this.ctx.setTransform(1, 0, 0, 1, 0, 0);
         this.ctx.scale(dpr, dpr);
 
-        this.circlePos.x = window.innerWidth / 2;
-        this.circlePos.y = window.innerHeight / 2;
+        if (!this.isTransitioning && !this.isInCorner) {
+            this.circlePos.x = window.innerWidth / 2;
+            this.circlePos.y = window.innerHeight / 2;
+        }
     };
 
+    setupCompanionCanvas() {
+        if (!this.companionCanvas || !this.companionCtx) return;
+        const dpr = Math.min(window.devicePixelRatio || 1, 2.0);
+        this.companionCanvas.width = 76 * dpr;
+        this.companionCanvas.height = 76 * dpr;
+        this.companionCanvas.style.width = '76px';
+        this.companionCanvas.style.height = '76px';
+        this.companionCtx.scale(dpr, dpr);
+    }
+
     setupEventListeners() {
-        // Mouse Move -> Wake up and look at cursor
+        // Window Mouse Move
         window.addEventListener('mousemove', (e) => {
             const now = performance.now();
             if (!this.isMouseMoving && (now - this.lastMouseMoveTime) > 1000) {
-                this.alertTimer = 0.22; // Pop alert when mouse moves again
+                this.alertTimer = 0.22;
             }
             this.lastMouseMoveTime = now;
             this.isMouseMoving = true;
@@ -100,11 +161,11 @@ class Gatekeeper2D {
             this.screenMouse.x = e.clientX;
             this.screenMouse.y = e.clientY;
 
-            this.targetMouse.x = (e.clientX / window.innerWidth) * 2 - 1;
-            this.targetMouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
+            this.mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
+            this.mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
         }, { passive: true });
 
-        // Touch Move on mobile
+        // Touch Move
         window.addEventListener('touchmove', (e) => {
             const now = performance.now();
             if (!this.isMouseMoving) this.alertTimer = 0.22;
@@ -115,298 +176,257 @@ class Gatekeeper2D {
                 const t = e.touches[0];
                 this.screenMouse.x = t.clientX;
                 this.screenMouse.y = t.clientY;
-                this.targetMouse.x = (t.clientX / window.innerWidth) * 2 - 1;
-                this.targetMouse.y = -(t.clientY / window.innerHeight) * 2 + 1;
+                this.mouse.x = (t.clientX / window.innerWidth) * 2 - 1;
+                this.mouse.y = -(t.clientY / window.innerHeight) * 2 + 1;
             }
         }, { passive: true });
 
         window.addEventListener('resize', this.handleResize);
 
-        // Click on Circle / Screen -> DETONATE DOMAIN
+        // Click Preloader -> SMOOTH FLIGHT ANIMATION TO CORNER (NO BLAST!)
         this.screen.addEventListener('click', (e) => {
             if (e.target.closest('#gatekeeperSkipBtn')) return;
+            if (this.isTransitioning || this.isInCorner) return;
 
             const dx = e.clientX - this.circlePos.x;
             const dy = e.clientY - this.circlePos.y;
             const dist = Math.hypot(dx, dy);
 
-            // Click within circle or when angry
+            // Click within circle or when angry triggers smooth flight into corner
             if (dist <= (this.circleRadius * 1.5) || this.anger > 0.35) {
-                this.triggerExplosion();
+                this.startFlightToCorner();
             } else {
-                // If clicked outside, creature gets slightly agitated
                 this.targetAnger = Math.min(1.0, this.targetAnger + 0.30);
                 this.anger = Math.min(1.0, this.anger + 0.25);
             }
         });
 
-        // Skip button bypass
+        // Skip button
         if (this.skipBtn) {
             this.skipBtn.addEventListener('click', (e) => {
                 e.stopPropagation();
-                this.skipIntro();
+                this.startFlightToCorner();
+            });
+        }
+
+        // Companion Hover Listeners -> ANGRY REACTION
+        if (this.companion) {
+            this.companion.addEventListener('mouseenter', () => {
+                this.isHoveredAngry = true;
+                this.companion.classList.add('angry');
+                if (this.bubble) {
+                    this.bubble.classList.add('angry');
+                    const randAngry = this.angryLines[Math.floor(Math.random() * this.angryLines.length)];
+                    this.bubbleText.textContent = randAngry;
+                }
+            });
+
+            this.companion.addEventListener('mouseleave', () => {
+                this.isHoveredAngry = false;
+                this.companion.classList.remove('angry');
+                if (this.bubble) {
+                    this.bubble.classList.remove('angry');
+                    this.bubbleText.textContent = this.jokes[this.currentJokeIndex];
+                }
+            });
+
+            // Click Companion -> NEXT JOKE
+            this.companion.addEventListener('click', (e) => {
+                e.stopPropagation();
+                if (this.isHoveredAngry) return;
+                this.nextJoke();
             });
         }
     }
 
+    playWarpSound() {
+        try {
+            const AudioContext = window.AudioContext || window.webkitAudioContext;
+            if (!AudioContext) return;
+            if (!this.audioCtx) this.audioCtx = new AudioContext();
+            if (this.audioCtx.state === 'suspended') this.audioCtx.resume();
+
+            const now = this.audioCtx.currentTime;
+
+            // Soft joyful anime whoosh chime
+            const osc = this.audioCtx.createOscillator();
+            const gain = this.audioCtx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(440, now);
+            osc.frequency.exponentialRampToValueAtTime(880, now + 0.35);
+
+            gain.gain.setValueAtTime(0.4, now);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + 0.4);
+
+            osc.connect(gain);
+            gain.connect(this.audioCtx.destination);
+            osc.start(now);
+            osc.stop(now + 0.45);
+        } catch (e) {}
+    }
+
+    // ==========================================================================
+    // SMOOTH FLIGHT ANIMATION TO CORNER (NO BLAST!)
+    // ==========================================================================
+    startFlightToCorner() {
+        if (this.isTransitioning || this.isInCorner) return;
+        this.isTransitioning = true;
+        this.flightElapsed = 0;
+
+        this.playWarpSound();
+
+        // Start position
+        this.flightStart = {
+            x: this.circlePos.x,
+            y: this.circlePos.y,
+            r: this.circleRadius
+        };
+
+        // Target position in bottom-right corner
+        this.flightTarget = {
+            x: window.innerWidth - 66,
+            y: window.innerHeight - 62,
+            r: 34
+        };
+
+        // Fade HUD elements immediately
+        if (this.threatFill && this.threatFill.parentElement) {
+            this.threatFill.parentElement.style.opacity = '0';
+        }
+        if (this.instruction) this.instruction.style.opacity = '0';
+        if (this.skipBtn) this.skipBtn.style.opacity = '0';
+
+        // Unlock page scroll & animate Hero section elements
+        if (window.lenis) window.lenis.start();
+        document.body.style.overflow = '';
+
+        if (typeof gsap !== 'undefined') {
+            gsap.from('#hero .hero-stylish-name, #hero .hero-desc, #hero .hero-cta, #characterMaskStage', {
+                opacity: 0,
+                y: 35,
+                duration: 0.9,
+                stagger: 0.08,
+                ease: 'power3.out'
+            });
+        }
+    }
+
+    finishFlightToCorner() {
+        this.isTransitioning = false;
+        this.isInCorner = true;
+
+        // Hide preloader overlay screen
+        this.screen.classList.add('hidden');
+        this.screen.style.display = 'none';
+
+        // Show companion widget in corner
+        if (this.companion) {
+            this.companion.classList.remove('hidden');
+            // Little landing bounce
+            if (typeof gsap !== 'undefined') {
+                gsap.from(this.companion, {
+                    scale: 0.5,
+                    y: 30,
+                    duration: 0.5,
+                    ease: 'back.out(2)'
+                });
+            }
+        }
+
+        // Start first joke with animated talking mouth
+        this.currentJokeIndex = 0;
+        this.setJoke(this.jokes[0]);
+    }
+
+    setJoke(text) {
+        if (!this.bubbleText) return;
+        this.bubbleText.textContent = text;
+        this.isTalking = true;
+        this.talkTimer = this.talkDuration;
+
+        // Bubble pop scale bounce
+        if (typeof gsap !== 'undefined' && this.bubble) {
+            gsap.fromTo(this.bubble,
+                { scale: 0.85, opacity: 0.5 },
+                { scale: 1.0, opacity: 1.0, duration: 0.35, ease: 'back.out(1.8)' }
+            );
+        }
+    }
+
+    nextJoke() {
+        this.currentJokeIndex = (this.currentJokeIndex + 1) % this.jokes.length;
+        this.jokeTimer = 0;
+        this.setJoke(this.jokes[this.currentJokeIndex]);
+    }
+
     updateProximity() {
-        if (this.isExploding) return;
+        if (this.isTransitioning || this.isInCorner) return;
 
         const dx = this.screenMouse.x - this.circlePos.x;
         const dy = this.screenMouse.y - this.circlePos.y;
         const dist = Math.hypot(dx, dy);
 
-        // Activation distance around 320px
         const maxDist = Math.min(window.innerWidth, window.innerHeight) * 0.38;
         this.targetAnger = Math.max(0, Math.min(1, 1 - (dist / maxDist)));
-
-        // Smooth Lerp for organic breathing response
         this.anger += (this.targetAnger - this.anger) * 0.085;
-
-        // Smooth Mouse Lerp
-        this.mouse.x += (this.targetMouse.x - this.mouse.x) * 0.14;
-        this.mouse.y += (this.targetMouse.y - this.mouse.y) * 0.14;
     }
 
     // ==========================================================================
-    // 2D EYES RENDERING (SOLID FILL ONLY, NO MOUTH, NO BORDERS)
+    // DRAW PRELOADER CANVAS (Full screen during preloader & flight)
     // ==========================================================================
-    drawEyes(ctx, cx, cy, anger, timeSinceMove, elapsedTime) {
-        const isAngry = anger > 0.16;
-        const isIdle = !isAngry && (timeSinceMove > 1.2);
-
-        // Base eye spacing inside 112px circle
-        const baseSpacing = 18;
-        const eyeBaseY = cy - 2;
-
-        if (isAngry) {
-            // ==============================================================
-            // 1. ANGRY EYES (Reference Image Top-Left)
-            // Solid inward-slanted wedges \  / (NO BORDER, NO MOUTH)
-            // ==============================================================
-            const gazeX = this.mouse.x * 6;
-            const gazeY = -this.mouse.y * 4;
-
-            const lx = cx - baseSpacing + gazeX;
-            const rx = cx + baseSpacing + gazeX;
-            const ly = eyeBaseY + gazeY;
-
-            ctx.fillStyle = '#0a0106'; // Solid pitch dark carbon
-            ctx.shadowColor = '#ff0038';
-            ctx.shadowBlur = 10 * anger;
-
-            // Left Eye: Inward slanted wedge (\)
-            ctx.beginPath();
-            ctx.moveTo(lx - 13, ly - 9);
-            ctx.lineTo(lx + 11, ly + 2);
-            ctx.lineTo(lx + 7, ly + 11);
-            ctx.bezierCurveTo(lx - 5, ly + 12, lx - 15, ly + 3, lx - 13, ly - 9);
-            ctx.closePath();
-            ctx.fill();
-
-            // Right Eye: Inward slanted wedge (/)
-            ctx.beginPath();
-            ctx.moveTo(rx + 13, ly - 9);
-            ctx.lineTo(rx - 11, ly + 2);
-            ctx.lineTo(rx - 7, ly + 11);
-            ctx.bezierCurveTo(rx + 5, ly + 12, rx + 15, ly + 3, rx + 13, ly - 9);
-            ctx.closePath();
-            ctx.fill();
-
-        } else if (isIdle) {
-            // ==============================================================
-            // 2. IDLE EXPRESSIONS (When cursor stops > 1.2s, NO MOUTH, NO BORDER)
-            // Cycles every 3.2s: Happy (^ ^), Sleepy (u u), Heart eyes (<3 <3), Side-glance
-            // ==============================================================
-            const idleTime = timeSinceMove - 1.2;
-            const moodIndex = Math.floor(idleTime / 3.2) % 4;
-
-            ctx.fillStyle = '#0f020a';
-            ctx.strokeStyle = '#0f020a';
-            ctx.shadowColor = '#ff4d94';
-            ctx.shadowBlur = 6;
-
-            const lx = cx - baseSpacing;
-            const rx = cx + baseSpacing;
-
-            if (moodIndex === 0) {
-                // MOOD 0: HAPPY CHEEKY (^   ^)
-                const bounceY = Math.sin(elapsedTime * 6) * 2.5;
-                ctx.lineWidth = 5.5;
-                ctx.lineCap = 'round';
-
-                // Left happy arch
-                ctx.beginPath();
-                ctx.arc(lx, eyeBaseY - 2 + bounceY, 10, Math.PI * 0.85, Math.PI * 0.15, true);
-                ctx.stroke();
-
-                // Right happy arch
-                ctx.beginPath();
-                ctx.arc(rx, eyeBaseY - 2 + bounceY, 10, Math.PI * 0.85, Math.PI * 0.15, true);
-                ctx.stroke();
-
-                // Cute subtle blush dots on cheeks (no mouth!)
-                ctx.fillStyle = 'rgba(255, 255, 255, 0.45)';
-                ctx.shadowBlur = 0;
-                ctx.beginPath();
-                ctx.arc(lx - 12, eyeBaseY + 9 + bounceY, 3, 0, Math.PI * 2);
-                ctx.arc(rx + 12, eyeBaseY + 9 + bounceY, 3, 0, Math.PI * 2);
-                ctx.fill();
-
-            } else if (moodIndex === 1) {
-                // MOOD 1: SLEEPY / CHILL (u   u)
-                const breathY = Math.sin(elapsedTime * 2.2) * 2;
-                ctx.lineWidth = 5;
-                ctx.lineCap = 'round';
-
-                // Left sleepy arch
-                ctx.beginPath();
-                ctx.arc(lx, eyeBaseY - 4 + breathY, 9, Math.PI * 0.15, Math.PI * 0.85, false);
-                ctx.stroke();
-
-                // Right sleepy arch
-                ctx.beginPath();
-                ctx.arc(rx, eyeBaseY - 4 + breathY, 9, Math.PI * 0.15, Math.PI * 0.85, false);
-                ctx.stroke();
-
-            } else if (moodIndex === 2) {
-                // MOOD 2: HEART EYES (<3   <3)
-                const heartScale = 0.58 + Math.sin(elapsedTime * 5) * 0.06;
-
-                const drawHeart = (hx, hy) => {
-                    ctx.save();
-                    ctx.translate(hx, hy);
-                    ctx.scale(heartScale, heartScale);
-                    ctx.beginPath();
-                    ctx.moveTo(0, 8);
-                    ctx.bezierCurveTo(-14, -6, -18, -20, 0, -22);
-                    ctx.bezierCurveTo(18, -20, 14, -6, 0, 8);
-                    ctx.fill();
-                    ctx.restore();
-                };
-
-                drawHeart(lx, eyeBaseY - 2);
-                drawHeart(rx, eyeBaseY - 2);
-
-            } else {
-                // MOOD 3: FUNNY SIDE-GLANCE (¬   ¬)
-                const lookDirection = Math.sin(elapsedTime * 1.5) > 0 ? 1 : -1;
-                const glx = lx + lookDirection * 7;
-                const grx = rx + lookDirection * 7;
-
-                ctx.beginPath();
-                ctx.roundRect(glx - 6, eyeBaseY - 5, 12, 10, 4);
-                ctx.roundRect(grx - 6, eyeBaseY - 5, 12, 10, 4);
-                ctx.fill();
-            }
-
-        } else {
-            // ==============================================================
-            // 3. ACTIVE CURSOR TRACKING (Follows mouse instantly)
-            // With funny "aadhi closed" (half-closed) side-eye squint
-            // NO BORDER, NO MOUTH
-            // ==============================================================
-            const gazeX = this.mouse.x;
-            const gazeY = -this.mouse.y;
-
-            // Comical blink every 3.6s
-            const blinkCycle = elapsedTime % 3.6;
-            let blinkFactor = 1.0;
-            if (blinkCycle > 3.44) {
-                const phase = (blinkCycle - 3.44) / 0.16;
-                blinkFactor = Math.abs(Math.sin(phase * Math.PI - Math.PI / 2)) * 0.85 + 0.15;
-            }
-
-            // Alert pop expansion when cursor starts moving again
-            let alertBoost = 0;
-            if (this.alertTimer > 0) {
-                alertBoost = (this.alertTimer / 0.22) * 6;
-            }
-
-            // Funny side-eye squint: tracking horizontally squishes eyes into funny half-closed look
-            const horizGaze = Math.abs(gazeX);
-            const eyeHeight = Math.max(3, (21 - horizGaze * 9 + alertBoost) * blinkFactor);
-            const eyeWidth = 12 + horizGaze * 4;
-            const tilt = gazeX * 0.16; // Comical tilt in gaze direction
-
-            ctx.fillStyle = '#0f020a'; // Solid dark carbon
-            ctx.shadowColor = 'transparent';
-            ctx.shadowBlur = 0;
-
-            const drawTrackingEye = (baseX) => {
-                const ex = baseX + gazeX * 11;
-                const ey = eyeBaseY + gazeY * 8;
-
-                ctx.save();
-                ctx.translate(ex, ey);
-                ctx.rotate(tilt);
-                ctx.beginPath();
-                ctx.roundRect(-eyeWidth / 2, -eyeHeight / 2, eyeWidth, eyeHeight, eyeWidth / 2);
-                ctx.fill();
-
-                // Cute white anime glint highlight dot (top-right of eye)
-                if (eyeHeight > 10) {
-                    ctx.fillStyle = '#ffffff';
-                    ctx.beginPath();
-                    ctx.arc(eyeWidth * 0.18, -eyeHeight * 0.22, 1.8, 0, Math.PI * 2);
-                    ctx.fill();
-                }
-                ctx.restore();
-            };
-
-            drawTrackingEye(cx - baseSpacing);
-            drawTrackingEye(cx + baseSpacing);
-        }
-    }
-
-    draw(elapsedTime) {
+    drawPreloader(elapsedTime, delta) {
         const ctx = this.ctx;
         const width = window.innerWidth;
         const height = window.innerHeight;
 
         ctx.clearRect(0, 0, width, height);
 
-        if (this.isExploding) {
-            // Render 2D particles
-            this.particles.forEach(p => {
-                if (p.alpha <= 0) return;
-                ctx.save();
-                ctx.globalAlpha = p.alpha;
-                ctx.fillStyle = p.color;
-                ctx.shadowColor = p.color;
-                ctx.shadowBlur = 8;
-                ctx.beginPath();
-                ctx.arc(p.x, p.y, p.radius * p.scale, 0, Math.PI * 2);
-                ctx.fill();
-                ctx.restore();
-            });
-            return;
+        let cx = this.circlePos.x;
+        let cy = this.circlePos.y;
+        let r = this.circleRadius;
+
+        if (this.isTransitioning) {
+            // Smooth flight interpolation across the screen
+            this.flightElapsed += delta;
+            const progress = Math.min(1.0, this.flightElapsed / this.flightDuration);
+
+            // Cubic ease in-out
+            const ease = progress < 0.5
+                ? 4 * progress * progress * progress
+                : 1 - Math.pow(-2 * progress + 2, 3) / 2;
+
+            // Flight Arc upward curve
+            const arcY = Math.sin(progress * Math.PI) * -75;
+
+            cx = this.flightStart.x + (this.flightTarget.x - this.flightStart.x) * ease;
+            cy = this.flightStart.y + (this.flightTarget.y - this.flightStart.y) * ease + arcY;
+            r = this.flightStart.r + (this.flightTarget.r - this.flightStart.r) * ease;
+
+            // Screen overlay background fades to 0
+            this.screen.style.opacity = `${1 - ease}`;
+
+            if (progress >= 1.0) {
+                this.finishFlightToCorner();
+                return;
+            }
+        } else {
+            // Subtle idle breathing & tension
+            const idleBob = Math.sin(elapsedTime * 2.2) * 3.5;
+            let tensionX = 0, tensionY = 0;
+            if (this.anger > 0.12) {
+                const freq = 30;
+                const amp = this.anger * 1.5;
+                tensionX = Math.sin(elapsedTime * freq) * amp;
+                tensionY = Math.cos(elapsedTime * (freq * 1.15)) * (amp * 0.7);
+            }
+            cx += tensionX;
+            cy += idleBob + tensionY;
         }
 
-        const anger = this.anger;
-        const timeSinceMove = (performance.now() - this.lastMouseMoveTime) / 1000;
-
-        // Subtle vertical idle breathing bob
-        const idleBob = Math.sin(elapsedTime * 2.2) * 3.5;
-
-        // Subtle tight tension hum when angry (NO violent shaking)
-        let tensionX = 0;
-        let tensionY = 0;
-        if (anger > 0.12) {
-            const freq = 30;
-            const amp = anger * 1.5; // Max 1.5px subtle tension
-            tensionX = Math.sin(elapsedTime * freq) * amp;
-            tensionY = Math.cos(elapsedTime * (freq * 1.15)) * (amp * 0.7);
-        }
-
-        const cx = this.circlePos.x + tensionX;
-        const cy = this.circlePos.y + idleBob + tensionY;
-        const r = this.circleRadius;
-
-        // 1. DRAW 2D COMPACT CIRCLE (Soft Pink -> Blood Red on anger)
+        // Draw Preloader Pink Circle
         const pinkGrad = ctx.createRadialGradient(cx - r * 0.2, cy - r * 0.25, 4, cx, cy, r);
-        if (anger > 0.05) {
-            // Blend from soft pink to menacing blood red
+        if (this.anger > 0.05 && !this.isTransitioning) {
+            const anger = this.anger;
             const rVal = 255;
             const gVal = Math.round(77 * (1 - anger) + 10 * anger);
             const bVal = Math.round(148 * (1 - anger) + 24 * anger);
@@ -418,23 +438,21 @@ class Gatekeeper2D {
             pinkGrad.addColorStop(0.75, `rgb(${edgeR}, ${edgeG}, ${edgeB})`);
             pinkGrad.addColorStop(1, anger > 0.4 ? '#8a0014' : '#d60a5e');
         } else {
-            // Radiant cute rose pink
             pinkGrad.addColorStop(0, '#ff66a8');
             pinkGrad.addColorStop(0.75, '#ff2e82');
             pinkGrad.addColorStop(1, '#e6126c');
         }
 
-        // Soft Circle Shadow Glow
         ctx.save();
-        ctx.shadowColor = anger > 0.25 ? '#ff0038' : '#ff4d94';
-        ctx.shadowBlur = 16 + anger * 14;
+        ctx.shadowColor = this.anger > 0.25 ? '#ff0038' : '#ff4d94';
+        ctx.shadowBlur = 16 + this.anger * 14;
         ctx.fillStyle = pinkGrad;
         ctx.beginPath();
         ctx.arc(cx, cy, r, 0, Math.PI * 2);
         ctx.fill();
         ctx.restore();
 
-        // Subtle 2D Glossy Sticker Glint (Top-Left of circle)
+        // 2D Glossy Glint
         ctx.save();
         ctx.fillStyle = 'rgba(255, 255, 255, 0.26)';
         ctx.beginPath();
@@ -442,19 +460,20 @@ class Gatekeeper2D {
         ctx.fill();
         ctx.restore();
 
-        // 2. DRAW EYES ONLY (NO MOUTH, NO BORDERS!)
-        this.drawEyes(ctx, cx, cy, anger, timeSinceMove, elapsedTime);
+        // Preloader Eyes (No mouth, no borders)
+        const timeSinceMove = (performance.now() - this.lastMouseMoveTime) / 1000;
+        this.drawEyes(ctx, cx, cy, r / 56, this.anger, timeSinceMove, elapsedTime, false);
 
-        // 3. DOM HUD FEEDBACK
-        if (this.threatFill) {
-            this.threatFill.style.width = `${Math.min(100, Math.round(anger * 100))}%`;
+        // Preloader HUD sync
+        if (this.threatFill && !this.isTransitioning) {
+            this.threatFill.style.width = `${Math.min(100, Math.round(this.anger * 100))}%`;
         }
 
-        if (this.instruction) {
-            if (anger > 0.65) {
+        if (this.instruction && !this.isTransitioning) {
+            if (this.anger > 0.65) {
                 this.instruction.classList.add('angry');
-                this.instruction.innerHTML = '⚠️ CURSED AGITATION PEAK &bull; CLICK TO DETONATE DOMAIN';
-            } else if (anger > 0.25) {
+                this.instruction.innerHTML = '⚠️ CURSED AGITATION PEAK &bull; CLICK TO ENTER DOMAIN';
+            } else if (this.anger > 0.25) {
                 this.instruction.classList.remove('angry');
                 this.instruction.innerHTML = 'APPROACHING SENTIENT CORE &bull; EMOTION SHIFTING';
             } else {
@@ -462,177 +481,234 @@ class Gatekeeper2D {
                 this.instruction.innerHTML = 'MOVE CURSOR CLOSER &bull; DISTURB THE SENTIENT ORB';
             }
         }
+    }
 
-        if (this.ambientGlow) {
-            const glowR = Math.round(255);
-            const glowG = Math.round(77 * (1 - anger));
-            const glowB = Math.round(148 * (1 - anger) + 60 * anger);
-            const glowAlpha = 0.22 + anger * 0.35;
-            this.ambientGlow.style.background = `radial-gradient(circle, rgba(${glowR}, ${glowG}, ${glowB}, ${glowAlpha}) 0%, rgba(255, 0, 60, ${glowAlpha * 0.5}) 45%, transparent 70%)`;
-            this.ambientGlow.style.transform = `translate(-50%, -50%) scale(${1 + anger * 0.25})`;
+    // ==========================================================================
+    // DRAW COMPANION CANVAS (In bottom-right corner with TALKING MOUTH & ANGER)
+    // ==========================================================================
+    drawCompanion(elapsedTime, delta) {
+        if (!this.companionCtx) return;
+        const ctx = this.companionCtx;
+        const w = 76;
+        const h = 76;
+        const cx = 38;
+        const cy = 38;
+        const r = 32;
+
+        ctx.clearRect(0, 0, w, h);
+
+        // Hover Angry State
+        const isAngry = this.isHoveredAngry;
+
+        // Circle Gradient (Pink vs Blood Red)
+        const grad = ctx.createRadialGradient(cx - r * 0.2, cy - r * 0.25, 3, cx, cy, r);
+        if (isAngry) {
+            grad.addColorStop(0, '#ff1a40');
+            grad.addColorStop(0.75, '#d60029');
+            grad.addColorStop(1, '#800014');
+        } else {
+            grad.addColorStop(0, '#ff66a8');
+            grad.addColorStop(0.75, '#ff2e82');
+            grad.addColorStop(1, '#e6126c');
         }
 
-        // 4. Sync Custom Blood Cursor Trail with rage
-        const cursorTrail = document.getElementById('cursorTrail');
-        if (cursorTrail && !this.isDisposed) {
-            if (anger > 0.45) {
-                cursorTrail.classList.add('active');
+        // Draw Circle Head
+        ctx.save();
+        ctx.fillStyle = grad;
+        ctx.beginPath();
+        ctx.arc(cx, cy, r, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+
+        // Glossy Glint
+        ctx.save();
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.24)';
+        ctx.beginPath();
+        ctx.ellipse(cx - r * 0.35, cy - r * 0.38, r * 0.36, r * 0.18, -Math.PI / 4, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+
+        // Eye Tracking towards mouse
+        const scale = 32 / 56;
+        this.drawEyes(ctx, cx, cy, scale, isAngry ? 1.0 : 0, 0, elapsedTime, true);
+
+        // ==============================================================
+        // ANIMATED TALKING MOUTH ("aur tab uska muh hilta hua dikhega")
+        // ==============================================================
+        if (isAngry) {
+            // Angry Grimace / Clamped Frown
+            ctx.lineWidth = 2.4;
+            ctx.lineCap = 'round';
+            ctx.strokeStyle = '#080005';
+            ctx.beginPath();
+            ctx.moveTo(cx - 5, cy + 9);
+            ctx.lineTo(cx + 5, cy + 9);
+            ctx.stroke();
+        } else if (this.isTalking) {
+            // Talking mouth flaps open and close while delivering joke
+            const mouthFlap = Math.abs(Math.sin(elapsedTime * 14));
+            if (mouthFlap > 0.2) {
+                // Open talking oval
+                ctx.fillStyle = '#080005';
+                ctx.beginPath();
+                ctx.ellipse(cx, cy + 8, 4.2, 2.0 + mouthFlap * 3.8, 0, 0, Math.PI * 2);
+                ctx.fill();
             } else {
-                cursorTrail.classList.remove('active');
+                // Closed smile curve
+                ctx.lineWidth = 2.2;
+                ctx.lineCap = 'round';
+                ctx.strokeStyle = '#080005';
+                ctx.beginPath();
+                ctx.arc(cx, cy + 7, 3.8, 0.2, Math.PI - 0.2, false);
+                ctx.stroke();
             }
-        }
-    }
-
-    playShatterAudio() {
-        try {
-            const AudioContext = window.AudioContext || window.webkitAudioContext;
-            if (!AudioContext) return;
-            if (!this.audioCtx) this.audioCtx = new AudioContext();
-            if (this.audioCtx.state === 'suspended') this.audioCtx.resume();
-
-            const now = this.audioCtx.currentTime;
-
-            // 1. Sub Bass Drop Oscillator (320Hz -> 38Hz)
-            const osc = this.audioCtx.createOscillator();
-            const gain = this.audioCtx.createGain();
-            osc.type = 'sine';
-            osc.frequency.setValueAtTime(320, now);
-            osc.frequency.exponentialRampToValueAtTime(38, now + 0.6);
-
-            gain.gain.setValueAtTime(0.8, now);
-            gain.gain.exponentialRampToValueAtTime(0.001, now + 0.65);
-
-            osc.connect(gain);
-            gain.connect(this.audioCtx.destination);
-            osc.start(now);
-            osc.stop(now + 0.7);
-
-            // 2. High-Frequency Glass/Cursed Shatter Noise Burst
-            const bufferSize = this.audioCtx.sampleRate * 0.35;
-            const noiseBuffer = this.audioCtx.createBuffer(1, bufferSize, this.audioCtx.sampleRate);
-            const output = noiseBuffer.getChannelData(0);
-            for (let i = 0; i < bufferSize; i++) {
-                output[i] = Math.random() * 2 - 1;
-            }
-
-            const whiteNoise = this.audioCtx.createBufferSource();
-            whiteNoise.buffer = noiseBuffer;
-
-            const noiseFilter = this.audioCtx.createBiquadFilter();
-            noiseFilter.type = 'highpass';
-            noiseFilter.frequency.setValueAtTime(1200, now);
-            noiseFilter.frequency.exponentialRampToValueAtTime(400, now + 0.3);
-
-            const noiseGain = this.audioCtx.createGain();
-            noiseGain.gain.setValueAtTime(0.65, now);
-            noiseGain.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
-
-            whiteNoise.connect(noiseFilter);
-            noiseFilter.connect(noiseGain);
-            noiseGain.connect(this.audioCtx.destination);
-            whiteNoise.start(now);
-            whiteNoise.stop(now + 0.4);
-        } catch (e) {
-            console.warn('[Gatekeeper Audio] WebAudio synth error:', e);
-        }
-    }
-
-    triggerExplosion() {
-        if (this.isExploding) return;
-        this.isExploding = true;
-
-        this.playShatterAudio();
-
-        // Spawn 2D Explosion Particles
-        const count = 75;
-        this.particles = [];
-        const cx = this.circlePos.x;
-        const cy = this.circlePos.y;
-
-        for (let i = 0; i < count; i++) {
-            const angle = Math.random() * Math.PI * 2;
-            const speed = 4 + Math.random() * 12;
-            this.particles.push({
-                x: cx + Math.cos(angle) * (Math.random() * this.circleRadius),
-                y: cy + Math.sin(angle) * (Math.random() * this.circleRadius),
-                vx: Math.cos(angle) * speed,
-                vy: Math.sin(angle) * speed,
-                radius: 2.5 + Math.random() * 5.0,
-                scale: 1.0,
-                alpha: 1.0,
-                color: Math.random() > 0.4 ? '#ff0038' : (Math.random() > 0.5 ? '#ff4d94' : '#ffffff'),
-                friction: 0.94 + Math.random() * 0.03
-            });
-        }
-
-        // Fullscreen Shockwave & Flash DOM animation
-        if (typeof gsap !== 'undefined') {
-            if (this.flash) {
-                gsap.fromTo(this.flash,
-                    { opacity: 0.95 },
-                    { opacity: 0, duration: 0.55, ease: 'power2.out' }
-                );
-            }
-
-            if (this.shockwave) {
-                gsap.fromTo(this.shockwave,
-                    { scale: 0.2, opacity: 1 },
-                    { scale: 4.5, opacity: 0, duration: 0.75, ease: 'power3.out' }
-                );
-            }
-
-            // Dissolve the Gatekeeper Screen
-            gsap.to(this.screen, {
-                opacity: 0,
-                duration: 0.75,
-                delay: 0.28,
-                ease: 'power3.out',
-                onComplete: () => {
-                    this.completeGatekeeperUnlock();
-                }
-            });
         } else {
-            this.completeGatekeeperUnlock();
+            // Relaxed cute smile curve when silent
+            ctx.lineWidth = 2.2;
+            ctx.lineCap = 'round';
+            ctx.strokeStyle = '#080005';
+            ctx.beginPath();
+            ctx.arc(cx, cy + 7, 4.0, 0.2, Math.PI - 0.2, false);
+            ctx.stroke();
         }
     }
 
-    skipIntro() {
-        if (this.isExploding) return;
-        this.isExploding = true;
+    // ==========================================================================
+    // REUSABLE EYES DRAWING (SOLID ONLY, NO MOUTH, NO BORDERS)
+    // ==========================================================================
+    drawEyes(ctx, cx, cy, scale, anger, timeSinceMove, elapsedTime, isCompanion) {
+        const isAngry = anger > 0.2;
+        const isIdle = !isAngry && !isCompanion && (timeSinceMove > 1.2);
 
-        if (typeof gsap !== 'undefined') {
-            gsap.to(this.screen, {
-                opacity: 0,
-                duration: 0.45,
-                ease: 'power2.out',
-                onComplete: () => {
-                    this.completeGatekeeperUnlock();
-                }
-            });
+        const baseSpacing = 18 * scale;
+        const eyeBaseY = cy - (isCompanion ? 2 : 2) * scale;
+
+        if (isAngry) {
+            // ANGRY EYES: Inward-slanted wedges \  /
+            const gazeX = this.mouse.x * (isCompanion ? 3 : 6);
+            const gazeY = -this.mouse.y * (isCompanion ? 2 : 4);
+
+            const lx = cx - baseSpacing + gazeX;
+            const rx = cx + baseSpacing + gazeX;
+            const ly = eyeBaseY + gazeY;
+
+            ctx.fillStyle = '#080005';
+            ctx.shadowColor = '#ff0038';
+            ctx.shadowBlur = 8 * anger;
+
+            const w = 13 * scale;
+            const h = 11 * scale;
+
+            // Left Eye: Inward slanted wedge (\)
+            ctx.beginPath();
+            ctx.moveTo(lx - w, ly - h * 0.8);
+            ctx.lineTo(lx + w * 0.85, ly + h * 0.2);
+            ctx.lineTo(lx + w * 0.5, ly + h);
+            ctx.bezierCurveTo(lx - w * 0.4, ly + h * 1.1, lx - w * 1.15, ly + h * 0.3, lx - w, ly - h * 0.8);
+            ctx.closePath();
+            ctx.fill();
+
+            // Right Eye: Inward slanted wedge (/)
+            ctx.beginPath();
+            ctx.moveTo(rx + w, ly - h * 0.8);
+            ctx.lineTo(rx - w * 0.85, ly + h * 0.2);
+            ctx.lineTo(rx - w * 0.5, ly + h);
+            ctx.bezierCurveTo(rx + w * 0.4, ly + h * 1.1, rx + w * 1.15, ly + h * 0.3, rx + w, ly - h * 0.8);
+            ctx.closePath();
+            ctx.fill();
+
+        } else if (isIdle) {
+            // Preloader Idle Moods (^ ^, u u, etc.)
+            const idleTime = timeSinceMove - 1.2;
+            const moodIndex = Math.floor(idleTime / 3.2) % 3;
+
+            ctx.fillStyle = '#0f020a';
+            ctx.strokeStyle = '#0f020a';
+
+            const lx = cx - baseSpacing;
+            const rx = cx + baseSpacing;
+
+            if (moodIndex === 0) {
+                // Happy (^ ^)
+                const bounceY = Math.sin(elapsedTime * 6) * 2.5;
+                ctx.lineWidth = 5.5 * scale;
+                ctx.lineCap = 'round';
+                ctx.beginPath();
+                ctx.arc(lx, eyeBaseY - 2 + bounceY, 10 * scale, Math.PI * 0.85, Math.PI * 0.15, true);
+                ctx.stroke();
+                ctx.beginPath();
+                ctx.arc(rx, eyeBaseY - 2 + bounceY, 10 * scale, Math.PI * 0.85, Math.PI * 0.15, true);
+                ctx.stroke();
+            } else if (moodIndex === 1) {
+                // Sleepy (u u)
+                const breathY = Math.sin(elapsedTime * 2.2) * 2;
+                ctx.lineWidth = 5 * scale;
+                ctx.lineCap = 'round';
+                ctx.beginPath();
+                ctx.arc(lx, eyeBaseY - 4 + breathY, 9 * scale, Math.PI * 0.15, Math.PI * 0.85, false);
+                ctx.stroke();
+                ctx.beginPath();
+                ctx.arc(rx, eyeBaseY - 4 + breathY, 9 * scale, Math.PI * 0.15, Math.PI * 0.85, false);
+                ctx.stroke();
+            } else {
+                // Heart Eyes
+                const drawHeart = (hx, hy) => {
+                    ctx.save();
+                    ctx.translate(hx, hy);
+                    ctx.scale(0.58 * scale, 0.58 * scale);
+                    ctx.beginPath();
+                    ctx.moveTo(0, 8);
+                    ctx.bezierCurveTo(-14, -6, -18, -20, 0, -22);
+                    ctx.bezierCurveTo(18, -20, 14, -6, 0, 8);
+                    ctx.fill();
+                    ctx.restore();
+                };
+                drawHeart(lx, eyeBaseY - 2);
+                drawHeart(rx, eyeBaseY - 2);
+            }
         } else {
-            this.completeGatekeeperUnlock();
-        }
-    }
+            // ACTIVE TRACKING (Tracking cursor with funny aadhi-closed side-eye)
+            const gazeX = this.mouse.x;
+            const gazeY = -this.mouse.y;
 
-    completeGatekeeperUnlock() {
-        this.isDisposed = true;
-        this.screen.classList.add('hidden');
-        document.body.style.overflow = '';
+            // Comical blink
+            const blinkCycle = elapsedTime % 3.6;
+            let blinkFactor = 1.0;
+            if (blinkCycle > 3.44) {
+                const phase = (blinkCycle - 3.44) / 0.16;
+                blinkFactor = Math.abs(Math.sin(phase * Math.PI - Math.PI / 2)) * 0.85 + 0.15;
+            }
 
-        // Start smooth momentum physics scroll
-        if (window.lenis) {
-            window.lenis.start();
-        }
+            const horizGaze = Math.abs(gazeX);
+            const eyeHeight = Math.max(3, (21 * scale - horizGaze * (9 * scale)) * blinkFactor);
+            const eyeWidth = (12 * scale) + horizGaze * (4 * scale);
+            const tilt = gazeX * 0.16;
 
-        // Animate in the Portfolio Hero section elements
-        if (typeof gsap !== 'undefined') {
-            gsap.from('#hero .hero-stylish-name, #hero .hero-desc, #hero .hero-cta, #characterMaskStage', {
-                opacity: 0,
-                y: 35,
-                duration: 0.9,
-                stagger: 0.08,
-                ease: 'power3.out'
-            });
+            ctx.fillStyle = '#0f020a';
+
+            const drawTrackingEye = (baseX) => {
+                const ex = baseX + gazeX * (11 * scale);
+                const ey = eyeBaseY + gazeY * (8 * scale);
+
+                ctx.save();
+                ctx.translate(ex, ey);
+                ctx.rotate(tilt);
+                ctx.beginPath();
+                ctx.roundRect(-eyeWidth / 2, -eyeHeight / 2, eyeWidth, eyeHeight, eyeWidth / 2);
+                ctx.fill();
+
+                // White anime glint
+                if (eyeHeight > 8 * scale) {
+                    ctx.fillStyle = '#ffffff';
+                    ctx.beginPath();
+                    ctx.arc(eyeWidth * 0.18, -eyeHeight * 0.22, 1.8 * scale, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+                ctx.restore();
+            };
+
+            drawTrackingEye(cx - baseSpacing);
+            drawTrackingEye(cx + baseSpacing);
         }
     }
 
@@ -645,28 +721,31 @@ class Gatekeeper2D {
         this.lastTime = now;
         this.elapsedTime += delta;
 
-        if (!this.isExploding) {
+        if (!this.isInCorner) {
             this.updateProximity();
-            if (this.alertTimer > 0) {
-                this.alertTimer = Math.max(0, this.alertTimer - delta);
-            }
+            this.drawPreloader(this.elapsedTime, delta);
         } else {
-            // Animate particles
-            this.particles.forEach(p => {
-                p.x += p.vx;
-                p.y += p.vy;
-                p.vx *= p.friction;
-                p.vy *= p.friction;
-                p.alpha = Math.max(0, p.alpha - delta * 1.4);
-                p.scale = Math.max(0, p.scale - delta * 0.5);
-            });
-        }
+            // Companion Jokes Timing
+            if (!this.isHoveredAngry) {
+                this.jokeTimer += delta;
+                if (this.jokeTimer >= this.jokeInterval) {
+                    this.nextJoke();
+                }
 
-        this.draw(this.elapsedTime);
+                if (this.isTalking) {
+                    this.talkTimer -= delta;
+                    if (this.talkTimer <= 0) {
+                        this.isTalking = false;
+                    }
+                }
+            }
+
+            this.drawCompanion(this.elapsedTime, delta);
+        }
     };
 }
 
 // Instantiate upon DOM Load
 document.addEventListener('DOMContentLoaded', () => {
-    window.gatekeeper = new Gatekeeper2D();
+    window.gatekeeper = new GatekeeperWithCompanion();
 });
