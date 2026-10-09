@@ -82,11 +82,8 @@ class GatekeeperWithCompanion {
         this.talkDuration = 3.4;     // Mouth flaps for 3.4s when joke appears
         this.talkTimer = 0;
 
-        // DOM HUD Handles
-        this.threatFill = document.getElementById('gatekeeperThreatFill');
-        this.instruction = document.getElementById('gatekeeperInstruction');
+        // DOM Handles
         this.ambientGlow = document.getElementById('gatekeeperAmbientGlow');
-        this.skipBtn = document.getElementById('gatekeeperSkipBtn');
         this.shockwave = document.getElementById('gatekeeperShockwave');
         this.flash = document.getElementById('gatekeeperFlash');
 
@@ -182,29 +179,20 @@ class GatekeeperWithCompanion {
 
         // Click Preloader -> SMOOTH FLIGHT ANIMATION TO CORNER (NO BLAST!)
         this.screen.addEventListener('click', (e) => {
-            if (e.target.closest('#gatekeeperSkipBtn')) return;
             if (this.isTransitioning || this.isInCorner) return;
 
             const dx = e.clientX - this.circlePos.x;
             const dy = e.clientY - this.circlePos.y;
             const dist = Math.hypot(dx, dy);
 
-            // Click within circle or when angry triggers smooth flight into corner
-            if (dist <= (this.circleRadius * 1.5) || this.anger > 0.35) {
+            // Click on circle or agitated click triggers smooth flight into corner
+            if (dist <= (this.circleRadius * 2.0) || this.anger > 0.25) {
                 this.startFlightToCorner();
             } else {
-                this.targetAnger = Math.min(1.0, this.targetAnger + 0.30);
-                this.anger = Math.min(1.0, this.anger + 0.25);
+                this.targetAnger = Math.min(1.0, this.targetAnger + 0.35);
+                this.anger = Math.min(1.0, this.anger + 0.30);
             }
         });
-
-        // Skip button
-        if (this.skipBtn) {
-            this.skipBtn.addEventListener('click', (e) => {
-                e.stopPropagation();
-                this.startFlightToCorner();
-            });
-        }
 
         // Companion Hover Listeners -> ANGRY REACTION
         if (this.companion) {
@@ -257,13 +245,6 @@ class GatekeeperWithCompanion {
             y: window.innerHeight - 72,
             r: 44
         };
-
-        // Fade HUD elements immediately
-        if (this.threatFill && this.threatFill.parentElement) {
-            this.threatFill.parentElement.style.opacity = '0';
-        }
-        if (this.instruction) this.instruction.style.opacity = '0';
-        if (this.skipBtn) this.skipBtn.style.opacity = '0';
 
         // Unlock page scroll & animate Hero section elements
         if (window.lenis) window.lenis.start();
@@ -432,24 +413,6 @@ class GatekeeperWithCompanion {
         // Preloader Eyes (No mouth, no borders)
         const timeSinceMove = (performance.now() - this.lastMouseMoveTime) / 1000;
         this.drawEyes(ctx, cx, cy, r / 56, this.anger, timeSinceMove, elapsedTime, false);
-
-        // Preloader HUD sync
-        if (this.threatFill && !this.isTransitioning) {
-            this.threatFill.style.width = `${Math.min(100, Math.round(this.anger * 100))}%`;
-        }
-
-        if (this.instruction && !this.isTransitioning) {
-            if (this.anger > 0.65) {
-                this.instruction.classList.add('angry');
-                this.instruction.innerHTML = '⚠️ CURSED AGITATION PEAK &bull; CLICK TO ENTER DOMAIN';
-            } else if (this.anger > 0.25) {
-                this.instruction.classList.remove('angry');
-                this.instruction.innerHTML = 'APPROACHING SENTIENT CORE &bull; EMOTION SHIFTING';
-            } else {
-                this.instruction.classList.remove('angry');
-                this.instruction.innerHTML = 'MOVE CURSOR CLOSER &bull; DISTURB THE SENTIENT ORB';
-            }
-        }
     }
 
     // ==========================================================================
