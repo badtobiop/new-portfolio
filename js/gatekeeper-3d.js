@@ -48,7 +48,7 @@ class GatekeeperWithCompanion {
 
         // Flight Animation State (Lands at bottom 48px, right 38px)
         this.flightStart = { x: 0, y: 0, r: 56 };
-        this.flightTarget = { x: window.innerWidth - 86, y: window.innerHeight - 96, r: 44 };
+        this.flightTarget = { x: window.innerWidth - 38 - 39, y: window.innerHeight - 48 - 39, r: 36 };
         this.flightDuration = 0.78;
         this.flightElapsed = 0;
 
@@ -63,7 +63,7 @@ class GatekeeperWithCompanion {
         this.isWalkingHome = false;
         this.walkStartPos = { x: 0, y: 0 };
         this.walkTargetPos = { x: 0, y: 0 };
-        this.walkDuration = 1.9; // 1.9s struts back in full attitude
+        this.walkDuration = 3.3; // 3.3s slow sassy strut back home with attitude
         this.walkElapsed = 0;
 
         // Sassy Girl English Dialogues & Banter (Sushi 🍣✨)
@@ -150,28 +150,28 @@ class GatekeeperWithCompanion {
             this.circlePos.y = window.innerHeight / 2;
         }
 
-        // Update flight target to match bottom 48px, right 38px
+        // Update flight target to match bottom 48px, right 38px (78px circle)
         this.flightTarget = {
-            x: window.innerWidth - 38 - 48,
-            y: window.innerHeight - 48 - 48,
-            r: 44
+            x: window.innerWidth - 38 - 39,
+            y: window.innerHeight - 48 - 39,
+            r: 36
         };
     };
 
     setupCompanionCanvas() {
         if (!this.companionCanvas || !this.companionCtx) return;
         const dpr = Math.min(window.devicePixelRatio || 1, 2.0);
-        this.companionCanvas.width = 96 * dpr;
-        this.companionCanvas.height = 96 * dpr;
-        this.companionCanvas.style.width = '96px';
-        this.companionCanvas.style.height = '96px';
+        this.companionCanvas.width = 78 * dpr;
+        this.companionCanvas.height = 78 * dpr;
+        this.companionCanvas.style.width = '78px';
+        this.companionCanvas.style.height = '78px';
         this.companionCtx.scale(dpr, dpr);
     }
 
     getHomePos() {
         return {
-            x: window.innerWidth - 38 - 96,
-            y: window.innerHeight - 48 - 96
+            x: window.innerWidth - 38 - 78,
+            y: window.innerHeight - 48 - 78
         };
     }
 
@@ -207,8 +207,8 @@ class GatekeeperWithCompanion {
                 if (Math.hypot(newX - this.dragStartX, newY - this.dragStartY) > 6) {
                     this.hasDragged = true;
                 }
-                const clampedX = Math.max(10, Math.min(window.innerWidth - 106, newX));
-                const clampedY = Math.max(70, Math.min(window.innerHeight - 106, newY));
+                const clampedX = Math.max(10, Math.min(window.innerWidth - 88, newX));
+                const clampedY = Math.max(60, Math.min(window.innerHeight - 88, newY));
                 this.companion.style.left = `${clampedX}px`;
                 this.companion.style.top = `${clampedY}px`;
                 this.companion.style.bottom = 'auto';
@@ -236,8 +236,8 @@ class GatekeeperWithCompanion {
                     if (Math.hypot(newX - this.dragStartX, newY - this.dragStartY) > 6) {
                         this.hasDragged = true;
                     }
-                    const clampedX = Math.max(10, Math.min(window.innerWidth - 106, newX));
-                    const clampedY = Math.max(70, Math.min(window.innerHeight - 106, newY));
+                    const clampedX = Math.max(10, Math.min(window.innerWidth - 88, newX));
+                    const clampedY = Math.max(60, Math.min(window.innerHeight - 88, newY));
                     this.companion.style.left = `${clampedX}px`;
                     this.companion.style.top = `${clampedY}px`;
                     this.companion.style.bottom = 'auto';
@@ -388,11 +388,11 @@ class GatekeeperWithCompanion {
             r: this.circleRadius
         };
 
-        // Target position in bottom-right corner (higher up: bottom 48px, right 38px)
+        // Target position in bottom-right corner (bottom 48px, right 38px, 78px circle)
         this.flightTarget = {
-            x: window.innerWidth - 38 - 48,
-            y: window.innerHeight - 48 - 48,
-            r: 44
+            x: window.innerWidth - 38 - 39,
+            y: window.innerHeight - 48 - 39,
+            r: 36
         };
 
         // Unlock page scroll & animate Hero section elements
@@ -571,11 +571,11 @@ class GatekeeperWithCompanion {
     drawCompanion(elapsedTime, delta) {
         if (!this.companionCtx) return;
         const ctx = this.companionCtx;
-        const w = 96;
-        const h = 96;
-        const cx = 48;
-        const cy = 48;
-        const r = 44;
+        const w = 78;
+        const h = 78;
+        const cx = 39;
+        const cy = 39;
+        const r = 36;
 
         ctx.clearRect(0, 0, w, h);
 
@@ -611,26 +611,31 @@ class GatekeeperWithCompanion {
         ctx.restore();
 
         // Eye Tracking towards mouse
-        const scale = 44 / 56;
+        const scale = 36 / 56;
         this.drawEyes(ctx, cx, cy, scale, isAngry ? 1.0 : 0, 0, elapsedTime, true);
 
         // ==============================================================
         // ANIMATED TALKING MOUTH ("aur tab uska muh hilta hua dikhega")
         // ==============================================================
+        this.drawMouth(ctx, cx, cy, isAngry, elapsedTime, scale);
+    }
+
+    drawMouth(ctx, cx, cy, isAngry, elapsedTime, scale = 1.0) {
+        const mouthY = cy + 9.5 * scale;
         if (isAngry) {
             // Angry Grimace / Clamped Frown
-            ctx.lineWidth = 2.8;
+            ctx.lineWidth = 2.4 * scale;
             ctx.lineCap = 'round';
             ctx.strokeStyle = '#080005';
             ctx.beginPath();
-            ctx.moveTo(cx - 7, cy + 12);
-            ctx.lineTo(cx + 7, cy + 12);
+            ctx.moveTo(cx - 6 * scale, mouthY);
+            ctx.lineTo(cx + 6 * scale, mouthY);
             ctx.stroke();
         } else if (this.isDragging) {
             // Surprised / Shocked round "O" mouth while being moved!
             ctx.fillStyle = '#080005';
             ctx.beginPath();
-            ctx.arc(cx, cy + 12, 4.2, 0, Math.PI * 2);
+            ctx.arc(cx, mouthY, 3.6 * scale, 0, Math.PI * 2);
             ctx.fill();
         } else if (this.isTalking) {
             // Talking mouth flaps open and close while delivering dialogue
@@ -639,24 +644,24 @@ class GatekeeperWithCompanion {
                 // Open talking oval
                 ctx.fillStyle = '#080005';
                 ctx.beginPath();
-                ctx.ellipse(cx, cy + 11, 5.2, 2.4 + mouthFlap * 4.2, 0, 0, Math.PI * 2);
+                ctx.ellipse(cx, mouthY, 4.6 * scale, (2.0 + mouthFlap * 3.4) * scale, 0, 0, Math.PI * 2);
                 ctx.fill();
             } else {
                 // Closed smile curve
-                ctx.lineWidth = 2.6;
+                ctx.lineWidth = 2.4 * scale;
                 ctx.lineCap = 'round';
                 ctx.strokeStyle = '#080005';
                 ctx.beginPath();
-                ctx.arc(cx, cy + 10, 4.8, 0.2, Math.PI - 0.2, false);
+                ctx.arc(cx, mouthY - 1, 4.2 * scale, 0.2, Math.PI - 0.2, false);
                 ctx.stroke();
             }
         } else {
             // Relaxed cute smile curve when silent
-            ctx.lineWidth = 2.6;
+            ctx.lineWidth = 2.4 * scale;
             ctx.lineCap = 'round';
             ctx.strokeStyle = '#080005';
             ctx.beginPath();
-            ctx.arc(cx, cy + 10, 5.0, 0.2, Math.PI - 0.2, false);
+            ctx.arc(cx, mouthY - 1, 4.4 * scale, 0.2, Math.PI - 0.2, false);
             ctx.stroke();
         }
     }
@@ -839,9 +844,9 @@ class GatekeeperWithCompanion {
                 const curX = this.walkStartPos.x + (this.walkTargetPos.x - this.walkStartPos.x) * progress;
                 const curY = this.walkStartPos.y + (this.walkTargetPos.y - this.walkStartPos.y) * progress;
 
-                // Sassy Waddle Strut (Tilts and little energetic hops)
-                const waddleTilt = Math.sin(this.walkElapsed * 13) * 12; // -12 deg to +12 deg sassy tilt
-                const waddleHop = Math.abs(Math.sin(this.walkElapsed * 13)) * -7; // -7px struts
+                // Sassy slow attitude strut (measured, humorous swaying tilt and gentle hops)
+                const waddleTilt = Math.sin(this.walkElapsed * 8.5) * 8.5; // -8.5 to +8.5 deg sassy tilt
+                const waddleHop = Math.abs(Math.sin(this.walkElapsed * 8.5)) * -4.5; // -4.5px gentle hops
 
                 this.companion.style.left = `${curX}px`;
                 this.companion.style.top = `${curY}px`;
@@ -851,12 +856,13 @@ class GatekeeperWithCompanion {
                     // Arrived back home!
                     this.isWalkingHome = false;
                     this.resetToHomeCSS();
+                    // User requested: "jab vo uske jaga pe ayegi to 2-3 sec mai vapis se pahle jaise bolna start kreggi"
                     setTimeout(() => {
-                        if (this.bubble && !this.isHoveredAngry) {
+                        if (this.bubble && !this.isHoveredAngry && !this.isDragging && !this.isWalkingHome) {
                             this.bubble.classList.remove('sass');
-                            this.bubbleText.textContent = this.jokes[this.currentJokeIndex];
+                            this.nextJoke(); // Starts speaking normal witty banter just like before!
                         }
-                    }, 1400);
+                    }, 2500); // 2.5 seconds (2-3 sec)
                 }
             }
 
