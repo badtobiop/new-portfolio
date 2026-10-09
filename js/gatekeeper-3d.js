@@ -388,6 +388,7 @@ class GatekeeperWithCompanion {
         this.isHoveredAngry = false;
         this.isTouchAngry = false;
         this.isArrivalAngry = false;
+        if (this.companion) this.companion.classList.add('angry'); // Angry face & glow while walking back
         if (this.arrivalAngerTimeout) {
             clearTimeout(this.arrivalAngerTimeout);
             this.arrivalAngerTimeout = null;
@@ -409,7 +410,7 @@ class GatekeeperWithCompanion {
     }
 
     // ==========================================================================
-    // ARRIVAL AT HOME IN ANGER ("jab uski jaga pe ayegi tab bolegi gusse mai 3-4s")
+    // ARRIVAL AT HOME IN ANGER ("jab uski jaga pe ayegi tab bolegi gusse mai 2-3s")
     // ==========================================================================
     triggerArrivalAnger() {
         this.isArrivalAngry = true;
@@ -436,9 +437,9 @@ class GatekeeperWithCompanion {
         }
 
         this.isTalking = true;
-        this.talkTimer = 3.2; // Speaks with animated mouth for 3.2s (3-4 seconds)
+        this.talkTimer = 2.6; // Speaks with animated mouth for 2.6s (2-3 seconds)
 
-        // After 3.2 seconds (3-4s), she calms down and returns to regular jokes
+        // After 2.6 seconds (2-3s), she DEFINITIVELY calms down and returns to regular funny jokes
         if (this.arrivalAngerTimeout) clearTimeout(this.arrivalAngerTimeout);
         this.arrivalAngerTimeout = setTimeout(() => {
             if (!this.isDragging && !this.isWalkingHome) {
@@ -451,7 +452,7 @@ class GatekeeperWithCompanion {
                 }
                 this.nextJoke(); // Automatically resumes normal friendly witty banter!
             }
-        }, 3200); // 3.2s in anger
+        }, 2600); // 2.6s in anger (2-3 sec)
     }
 
     // ==========================================================================
@@ -710,8 +711,8 @@ class GatekeeperWithCompanion {
 
         ctx.clearRect(0, 0, w, h);
 
-        // Hover Angry State OR Arrival Scolding Anger OR Touch Poke Anger
-        const isAngry = this.isHoveredAngry || this.isArrivalAngry || this.isTouchAngry;
+        // Hover Angry State OR Arrival Scolding Anger OR Touch Poke Anger OR Walking Home in Anger
+        const isAngry = this.isHoveredAngry || this.isArrivalAngry || this.isTouchAngry || this.isWalkingHome;
 
         // Circle Gradient (Pink vs Blood Red)
         const grad = ctx.createRadialGradient(cx - r * 0.2, cy - r * 0.25, 4, cx, cy, r);
