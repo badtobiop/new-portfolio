@@ -328,6 +328,7 @@ class GatekeeperWithCompanion {
                 }
                 this.isArrivalAngry = false;
                 this.isTouchAngry = false;
+                this.isHoveredAngry = false;
                 this.isDragging = true;
                 this.hasDragged = false;
                 this.companion.classList.add('dragging');
@@ -345,7 +346,7 @@ class GatekeeperWithCompanion {
 
             // Hover Listeners -> ANGRY DEFENSE
             this.companion.addEventListener('mouseenter', () => {
-                if (this.isDragging || this.isWalkingHome) return;
+                if (this.isDragging || this.isWalkingHome || this.isArrivalAngry) return;
                 this.isHoveredAngry = true;
                 this.companion.classList.add('angry');
                 if (this.bubble) {
@@ -358,12 +359,12 @@ class GatekeeperWithCompanion {
             });
 
             this.companion.addEventListener('mouseleave', () => {
-                if (this.isDragging || this.isWalkingHome) return;
                 this.isHoveredAngry = false;
+                if (this.isDragging || this.isWalkingHome) return;
                 if (!this.isArrivalAngry && !this.isTouchAngry) {
                     this.companion.classList.remove('angry');
                     if (this.bubble) {
-                        this.bubble.classList.remove('angry');
+                        this.bubble.classList.remove('angry', 'sass');
                         this.bubbleText.textContent = this.jokes[this.currentJokeIndex];
                     }
                 }
@@ -384,6 +385,17 @@ class GatekeeperWithCompanion {
     triggerSassyReturn(fromX, fromY, home) {
         if (this.isWalkingHome) return;
         this.isWalkingHome = true;
+        this.isHoveredAngry = false;
+        this.isTouchAngry = false;
+        this.isArrivalAngry = false;
+        if (this.arrivalAngerTimeout) {
+            clearTimeout(this.arrivalAngerTimeout);
+            this.arrivalAngerTimeout = null;
+        }
+        if (this.touchAngerTimeout) {
+            clearTimeout(this.touchAngerTimeout);
+            this.touchAngerTimeout = null;
+        }
         this.walkStartPos = { x: fromX, y: fromY };
         this.walkTargetPos = home;
         this.walkElapsed = 0;
@@ -401,6 +413,8 @@ class GatekeeperWithCompanion {
     // ==========================================================================
     triggerArrivalAnger() {
         this.isArrivalAngry = true;
+        this.isHoveredAngry = false;
+        this.isTouchAngry = false;
         if (this.companion) this.companion.classList.add('angry');
 
         // Pick sassy angry scolding line
@@ -422,20 +436,22 @@ class GatekeeperWithCompanion {
         }
 
         this.isTalking = true;
-        this.talkTimer = 3.5; // Speaks with animated mouth for 3.5s (3-4 seconds)
+        this.talkTimer = 3.2; // Speaks with animated mouth for 3.2s (3-4 seconds)
 
-        // After 3.5 seconds (3-4s), she calms down and returns to regular jokes
+        // After 3.2 seconds (3-4s), she calms down and returns to regular jokes
         if (this.arrivalAngerTimeout) clearTimeout(this.arrivalAngerTimeout);
         this.arrivalAngerTimeout = setTimeout(() => {
-            if (!this.isHoveredAngry && !this.isDragging && !this.isWalkingHome) {
+            if (!this.isDragging && !this.isWalkingHome) {
                 this.isArrivalAngry = false;
+                this.isHoveredAngry = false;
+                this.isTouchAngry = false;
                 if (this.companion) this.companion.classList.remove('angry');
                 if (this.bubble) {
-                    this.bubble.classList.remove('angry');
+                    this.bubble.classList.remove('angry', 'sass');
                 }
                 this.nextJoke(); // Automatically resumes normal friendly witty banter!
             }
-        }, 3500); // 3.5s in anger
+        }, 3200); // 3.2s in anger
     }
 
     // ==========================================================================
@@ -469,11 +485,12 @@ class GatekeeperWithCompanion {
 
         if (this.touchAngerTimeout) clearTimeout(this.touchAngerTimeout);
         this.touchAngerTimeout = setTimeout(() => {
-            if (!this.isHoveredAngry && !this.isArrivalAngry && !this.isDragging && !this.isWalkingHome) {
+            if (!this.isDragging && !this.isWalkingHome) {
                 this.isTouchAngry = false;
+                this.isHoveredAngry = false;
                 if (this.companion) this.companion.classList.remove('angry');
                 if (this.bubble) {
-                    this.bubble.classList.remove('angry');
+                    this.bubble.classList.remove('angry', 'sass');
                     this.bubbleText.textContent = this.jokes[this.currentJokeIndex];
                 }
             }
@@ -551,6 +568,9 @@ class GatekeeperWithCompanion {
         this.bubbleText.textContent = text;
         if (this.bubble) {
             this.bubble.classList.remove('bubble-hidden', 'angry', 'sass');
+        }
+        if (this.companion) {
+            this.companion.classList.remove('angry');
         }
         this.isTalking = true;
         this.talkTimer = this.talkDuration;
