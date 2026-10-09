@@ -37,7 +37,9 @@ class GatekeeperWithCompanion {
         this.isDisposed = false;
         this.isHoveredAngry = false;
         this.isArrivalAngry = false;
+        this.isTouchAngry = false;
         this.arrivalAngerTimeout = null;
+        this.touchAngerTimeout = null;
 
         // Inactivity & Timing
         this.lastMouseMoveTime = performance.now();
@@ -75,19 +77,33 @@ class GatekeeperWithCompanion {
             "Excuse me, Sushi only looks this fabulous because Utkarsh coded me with perfection! 💁‍♀️💖",
             "Are you going to hire him or should Sushi keep judging your taste? 💅💼",
             "His 3D visuals are giving pure main character energy, right? ✨🎬",
-            "He literally survived on coffee and late nights to build this for you! ☕🔥",
+            "He literally survived on coffee, Spotify beats, and late nights for this! ☕🔥",
             "If you think you found a bug... no you didn't. Sushi says it's a luxury feature! 🤫💅",
             "Hit that 'Send Message' button already! Utkarsh doesn't bite, Sushi promises. 📩😉",
+            "Why use boring 2D portfolios when Utkarsh gives you a whole 3D universe?! 🌌🍣",
             "Keep scrolling, darling! The cinematic magic is right below! 👑✨",
+            "Rumor has it Utkarsh writes code faster than my sass can keep up! 💻⚡",
+            "My makeup is pure CSS and my attitude is 100% JavaScript, baby! 💄💅",
             "Star his GitHub repo right now, or Sushi is putting you on her blacklist! ⭐😤",
+            "If your jaw hasn't dropped yet, you clearly haven't checked his Work section! 🚀👀",
             "You made it all the way down here? Wow, download his resume already! 📄🎉"
         ];
 
         this.angryLines = [
             "Hey! Keep your cursor away from Sushi! 😤💅",
-            "Did I give you permission to touch Sushi? Ugh! 🙄💢",
+            "Did I give you permission to hover on Sushi? Ugh! 🙄💢",
             "Excuse you?! Go look at Utkarsh's work, not Sushi! 😡🍣",
-            "Personal space, sweetie! Sushi needs her breathing room! 💅⚡"
+            "Personal space, sweetie! Sushi needs her breathing room! 💅⚡",
+            "Stop staring, you're making my CSS blush! 😳💅"
+        ];
+
+        this.touchAngryLines = [
+            "Hey! Don't poke Sushi! Personal space, sweetie! 😤💅",
+            "Did you just touch me?! Rude! Go click Utkarsh's Hire button! 🙄💢",
+            "Hands off! Sushi is luxury art, not a squishy stress ball! 😡🍣",
+            "Ouch! Sushi bites if you keep poking without permission! 💅⚡",
+            "Excuse you?! Hands off the merchandise, honey! 💁‍♀️🔥",
+            "Utkarsh! Tell this visitor to stop poking me right now! 😫😤"
         ];
 
         this.dragSassLines = [
@@ -98,7 +114,7 @@ class GatekeeperWithCompanion {
 
         this.currentJokeIndex = 0;
         this.jokeTimer = 0;
-        this.jokeInterval = 7.5;      // Cycle joke every 7.5s
+        this.jokeInterval = 6.0;      // Cycle joke every 6.0s so she cracks jokes more often
         this.isTalking = false;
         this.talkDuration = 3.5;     // Mouth flaps for 3.5s when speaking
         this.talkTimer = 0;
@@ -306,7 +322,12 @@ class GatekeeperWithCompanion {
                     clearTimeout(this.arrivalAngerTimeout);
                     this.arrivalAngerTimeout = null;
                 }
+                if (this.touchAngerTimeout) {
+                    clearTimeout(this.touchAngerTimeout);
+                    this.touchAngerTimeout = null;
+                }
                 this.isArrivalAngry = false;
+                this.isTouchAngry = false;
                 this.isDragging = true;
                 this.hasDragged = false;
                 this.companion.classList.add('dragging');
@@ -339,7 +360,7 @@ class GatekeeperWithCompanion {
             this.companion.addEventListener('mouseleave', () => {
                 if (this.isDragging || this.isWalkingHome) return;
                 this.isHoveredAngry = false;
-                if (!this.isArrivalAngry) {
+                if (!this.isArrivalAngry && !this.isTouchAngry) {
                     this.companion.classList.remove('angry');
                     if (this.bubble) {
                         this.bubble.classList.remove('angry');
@@ -348,12 +369,11 @@ class GatekeeperWithCompanion {
                 }
             });
 
-            // Click Companion -> NEXT JOKE (Only if not dragged or angry)
+            // Click / Tap Companion -> ANGER ON TOUCH ("toch krne pe gussa bhi ho")
             this.companion.addEventListener('click', (e) => {
                 e.stopPropagation();
                 if (this.hasDragged || this.isWalkingHome) return;
-                if (this.isHoveredAngry || this.isArrivalAngry) return;
-                this.nextJoke();
+                this.triggerTouchAnger();
             });
         }
     }
@@ -416,6 +436,55 @@ class GatekeeperWithCompanion {
                 this.nextJoke(); // Automatically resumes normal friendly witty banter!
             }
         }, 3500); // 3.5s in anger
+    }
+
+    // ==========================================================================
+    // TOUCH / POKE ANGER ("toch krne pe gussa bhi ho")
+    // ==========================================================================
+    triggerTouchAnger() {
+        if (this.isWalkingHome) return;
+
+        this.isTouchAngry = true;
+        if (this.companion) this.companion.classList.add('angry');
+
+        // Pick indignant scolding line for being touched/poked
+        const randAngry = this.touchAngryLines[Math.floor(Math.random() * this.touchAngryLines.length)];
+        if (this.bubbleText) this.bubbleText.textContent = randAngry;
+
+        if (this.bubble) {
+            this.bubble.classList.remove('bubble-hidden', 'sass');
+            this.bubble.classList.add('angry');
+
+            // Quick indignant pop bounce
+            if (typeof gsap !== 'undefined') {
+                gsap.fromTo(this.bubble,
+                    { scale: 0.82, opacity: 0.7 },
+                    { scale: 1.0, opacity: 1.0, duration: 0.28, ease: 'back.out(2)', clearProps: 'transform' }
+                );
+                // Indignant head shudder / shake
+                if (this.companionCanvas) {
+                    gsap.fromTo(this.companionCanvas,
+                        { x: -5, rotation: -8 },
+                        { x: 0, rotation: 0, duration: 0.35, ease: 'elastic.out(1.2, 0.35)', clearProps: 'all' }
+                    );
+                }
+            }
+        }
+
+        this.isTalking = true;
+        this.talkTimer = 2.8;
+
+        if (this.touchAngerTimeout) clearTimeout(this.touchAngerTimeout);
+        this.touchAngerTimeout = setTimeout(() => {
+            if (!this.isHoveredAngry && !this.isArrivalAngry && !this.isDragging && !this.isWalkingHome) {
+                this.isTouchAngry = false;
+                if (this.companion) this.companion.classList.remove('angry');
+                if (this.bubble) {
+                    this.bubble.classList.remove('angry');
+                    this.bubbleText.textContent = this.jokes[this.currentJokeIndex];
+                }
+            }
+        }, 2800);
     }
 
     // ==========================================================================
@@ -627,8 +696,8 @@ class GatekeeperWithCompanion {
 
         ctx.clearRect(0, 0, w, h);
 
-        // Hover Angry State OR Arrival Scolding Anger
-        const isAngry = this.isHoveredAngry || this.isArrivalAngry;
+        // Hover Angry State OR Arrival Scolding Anger OR Touch Poke Anger
+        const isAngry = this.isHoveredAngry || this.isArrivalAngry || this.isTouchAngry;
 
         // Circle Gradient (Pink vs Blood Red)
         const grad = ctx.createRadialGradient(cx - r * 0.2, cy - r * 0.25, 4, cx, cy, r);
@@ -658,41 +727,52 @@ class GatekeeperWithCompanion {
         ctx.fill();
         ctx.restore();
 
-        // Eye Tracking towards mouse
+        // Dynamic gaze tracking towards mouse (syncs eyes & mouth)
         const scale = 40 / 56;
+        const gazeX = this.mouse.x;
+        const gazeY = -this.mouse.y;
+
         this.drawEyes(ctx, cx, cy, scale, isAngry ? 1.0 : 0, 0, elapsedTime, true);
 
         // ==============================================================
-        // ANIMATED TALKING MOUTH ("aur tab uska muh hilta hua dikhega")
+        // ANIMATED TALKING MOUTH (Moves with cursor alongside eyes!)
         // ==============================================================
-        this.drawMouth(ctx, cx, cy, isAngry, elapsedTime, scale);
+        this.drawMouth(ctx, cx, cy, isAngry, elapsedTime, scale, gazeX, gazeY);
     }
 
-    drawMouth(ctx, cx, cy, isAngry, elapsedTime, scale = 1.0) {
-        const mouthY = cy + 9.5 * scale;
+    drawMouth(ctx, cx, cy, isAngry, elapsedTime, scale = 1.0, gazeX = 0, gazeY = 0) {
+        // Gaze tracking for mouth (syncs 2.5D head tracking with eyes)
+        const mouthX = cx + gazeX * (8.0 * scale);
+        const mouthY = cy + (9.5 * scale) + gazeY * (5.5 * scale);
+        const tilt = gazeX * 0.12;
+
+        ctx.save();
+        ctx.translate(mouthX, mouthY);
+        ctx.rotate(tilt);
+
         if (isAngry) {
             // Angry Grimace / Clamped Frown
             ctx.lineWidth = 2.4 * scale;
             ctx.lineCap = 'round';
             ctx.strokeStyle = '#080005';
             ctx.beginPath();
-            ctx.moveTo(cx - 6 * scale, mouthY);
-            ctx.lineTo(cx + 6 * scale, mouthY);
+            ctx.moveTo(-6 * scale, 0);
+            ctx.lineTo(6 * scale, 0);
             ctx.stroke();
         } else if (this.isDragging) {
             // Surprised / Shocked round "O" mouth while being moved!
             ctx.fillStyle = '#080005';
             ctx.beginPath();
-            ctx.arc(cx, mouthY, 3.6 * scale, 0, Math.PI * 2);
+            ctx.arc(0, 0, 3.6 * scale, 0, Math.PI * 2);
             ctx.fill();
         } else if (this.isTalking) {
             // Talking mouth flaps open and close while delivering dialogue
             const mouthFlap = Math.abs(Math.sin(elapsedTime * 14));
-            if (mouthFlap > 0.2) {
+            if (mouthFlap > 0.18) {
                 // Open talking oval
                 ctx.fillStyle = '#080005';
                 ctx.beginPath();
-                ctx.ellipse(cx, mouthY, 4.6 * scale, (2.0 + mouthFlap * 3.4) * scale, 0, 0, Math.PI * 2);
+                ctx.ellipse(0, 0, 4.6 * scale, (2.0 + mouthFlap * 3.4) * scale, 0, 0, Math.PI * 2);
                 ctx.fill();
             } else {
                 // Closed smile curve
@@ -700,7 +780,7 @@ class GatekeeperWithCompanion {
                 ctx.lineCap = 'round';
                 ctx.strokeStyle = '#080005';
                 ctx.beginPath();
-                ctx.arc(cx, mouthY - 1, 4.2 * scale, 0.2, Math.PI - 0.2, false);
+                ctx.arc(0, -1, 4.2 * scale, 0.2, Math.PI - 0.2, false);
                 ctx.stroke();
             }
         } else {
@@ -709,9 +789,10 @@ class GatekeeperWithCompanion {
             ctx.lineCap = 'round';
             ctx.strokeStyle = '#080005';
             ctx.beginPath();
-            ctx.arc(cx, mouthY - 1, 4.4 * scale, 0.2, Math.PI - 0.2, false);
+            ctx.arc(0, -1, 4.4 * scale, 0.2, Math.PI - 0.2, false);
             ctx.stroke();
         }
+        ctx.restore();
     }
 
     // ==========================================================================
@@ -910,7 +991,7 @@ class GatekeeperWithCompanion {
             }
 
             // Companion Jokes Timing (Only when not angry or moving)
-            if (!this.isHoveredAngry && !this.isArrivalAngry && !this.isDragging && !this.isWalkingHome) {
+            if (!this.isHoveredAngry && !this.isArrivalAngry && !this.isTouchAngry && !this.isDragging && !this.isWalkingHome) {
                 this.jokeTimer += delta;
                 if (this.jokeTimer >= this.jokeInterval) {
                     this.nextJoke();
