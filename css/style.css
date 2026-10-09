@@ -146,11 +146,11 @@ body {
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    width: 360px;
-    height: 360px;
+    width: 220px;
+    height: 220px;
     border-radius: 50%;
-    background: radial-gradient(circle, rgba(255, 77, 148, 0.3) 0%, rgba(255, 0, 60, 0.12) 45%, transparent 70%);
-    filter: blur(35px);
+    background: radial-gradient(circle, rgba(255, 77, 148, 0.3) 0%, rgba(255, 0, 60, 0.1) 45%, transparent 70%);
+    filter: blur(25px);
     pointer-events: none;
     z-index: 1;
     transition: background 0.3s ease, transform 0.3s ease;

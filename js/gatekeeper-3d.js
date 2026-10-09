@@ -1,17 +1,18 @@
 // ==========================================================================
-// SHADOW REALM // 3D SENTIENT CURSED GATEKEEPER PRELOADER
-// Interactive 3D Cyber-Emoji Creature: Gaze Tracking, Idle Moods & Domain Shatter
-// Inspired by Sentient Digital Visor Bot Aesthetics
+// SHADOW REALM // 2D SENTIENT CURSED GATEKEEPER PRELOADER
+// Interactive 2D Compact Emoji Creature: Cursor Tracking, Proximity Anger & Shatter
+// Pure 2D Canvas: Compact Pink Circle, Eyes Only, No Mouth, No Borders
 // Author: Utkarsh Dhakane (badtobiop) & Antigravity Pair-Programmer
 // ==========================================================================
 
-import * as THREE from 'three';
-
-class Gatekeeper3D {
+class Gatekeeper2D {
     constructor() {
         this.screen = document.getElementById('gatekeeper-screen');
         this.canvas = document.getElementById('gatekeeper-canvas');
         if (!this.screen || !this.canvas) return;
+
+        this.ctx = this.canvas.getContext('2d');
+        if (!this.ctx) return;
 
         // Interactive Tracking State
         this.mouse = { x: 0, y: 0 };           // Normalized (-1 to 1)
@@ -22,12 +23,17 @@ class Gatekeeper3D {
         this.isExploding = false;
         this.isDisposed = false;
 
-        // Inactivity & Mood Cycle State
+        // Inactivity & Mood State
         this.lastMouseMoveTime = performance.now();
         this.isMouseMoving = false;
         this.alertTimer = 0;                    // Pop alert eye expansion when cursor starts moving
-        this.idleMoodTimer = 0;
-        this.idleMoodIndex = 0;                 // 0: Happy (^ ^), 1: Sleepy (u u), 2: Hearts (<3 <3), 3: Cyber Pulse
+
+        // 2D Circle Size & Physics
+        this.circleRadius = 56;                 // Compact cute circle (112px diameter)
+        this.circlePos = { x: window.innerWidth / 2, y: window.innerHeight / 2 };
+
+        // 2D Explosion Particle Pool
+        this.particles = [];
 
         // DOM HUD Handles
         this.threatFill = document.getElementById('gatekeeperThreatFill');
@@ -37,43 +43,11 @@ class Gatekeeper3D {
         this.shockwave = document.getElementById('gatekeeperShockwave');
         this.flash = document.getElementById('gatekeeperFlash');
 
-        // Color Palettes
-        this.colorPink = new THREE.Color(0xff4d94);      // Radiant Neon Rose Pink
-        this.colorHotPink = new THREE.Color(0xff1a6b);   // Cursed Fuchsia
-        this.colorBloodRed = new THREE.Color(0xd60029);  // Menacing Cursed Blood Red
-        this.colorDarkRage = new THREE.Color(0x660010);  // Deep Abyssal Crimson
+        // Timing
+        this.lastTime = performance.now();
+        this.elapsedTime = 0;
 
-        // Three.js Core Components
-        this.scene = null;
-        this.camera = null;
-        this.renderer = null;
-        this.clock = new THREE.Clock();
-
-        // 3D Creature Mesh References
-        this.creatureGroup = null;
-        this.orbMesh = null;
-        this.orbMaterial = null;
-        this.visorMesh = null;
-        this.visorMaterial = null;
-        this.leftEar = null;
-        this.rightEar = null;
-        this.leftEarRing = null;
-        this.rightEarRing = null;
-        this.earRingMat = null;
-        this.topCrest = null;
-
-        // Dynamic 2D Visor Screen Canvas & Texture
-        this.faceCanvas = document.createElement('canvas');
-        this.faceCanvas.width = 512;
-        this.faceCanvas.height = 512;
-        this.faceCtx = this.faceCanvas.getContext('2d');
-        this.faceTexture = null;
-
-        // Aura Particles & Shards
-        this.auraParticles = null;
-        this.shardMeshes = [];
-
-        // Audio Engine Context for Domain Shatter
+        // Audio Context
         this.audioCtx = null;
 
         this.init();
@@ -94,236 +68,31 @@ class Gatekeeper3D {
             setTimeout(() => clearInterval(checkLenis), 3000);
         }
 
-        this.setupThreeScene();
-        this.setupLights();
-        this.createCreature();
-        this.createAuraParticles();
-        this.createShardPool();
+        this.handleResize();
         this.setupEventListeners();
         this.animate();
     }
 
-    setupThreeScene() {
-        this.scene = new THREE.Scene();
-
-        const aspect = window.innerWidth / window.innerHeight;
-        this.camera = new THREE.PerspectiveCamera(45, aspect, 0.1, 100);
-        this.camera.position.set(0, 0, 6.6); // Compact, centered framing for smaller orb
-
+    handleResize = () => {
+        if (this.isDisposed) return;
         const dpr = Math.min(window.devicePixelRatio || 1, 2.0);
-        this.renderer = new THREE.WebGLRenderer({
-            canvas: this.canvas,
-            antialias: true,
-            alpha: true,
-            powerPreference: 'high-performance'
-        });
-        this.renderer.setSize(window.innerWidth, window.innerHeight);
-        this.renderer.setPixelRatio(dpr);
-        this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
-        this.renderer.toneMappingExposure = 1.35;
-    }
+        this.canvas.width = window.innerWidth * dpr;
+        this.canvas.height = window.innerHeight * dpr;
+        this.canvas.style.width = `${window.innerWidth}px`;
+        this.canvas.style.height = `${window.innerHeight}px`;
+        this.ctx.setTransform(1, 0, 0, 1, 0, 0);
+        this.ctx.scale(dpr, dpr);
 
-    setupLights() {
-        // Soft ambient twilight light
-        this.ambientLight = new THREE.AmbientLight(0x2a0818, 2.2);
-        this.scene.add(this.ambientLight);
-
-        // Key Light (Transforms with anger from Rose Pink to Pure Crimson Red)
-        this.keyLight = new THREE.PointLight(0xff4d94, 5.5, 25);
-        this.keyLight.position.set(2.8, 2.6, 4.2);
-        this.scene.add(this.keyLight);
-
-        // Fill Light (Crisp specular sheen)
-        this.fillLight = new THREE.DirectionalLight(0xffffff, 1.4);
-        this.fillLight.position.set(-3.0, 2.2, 3.5);
-        this.scene.add(this.fillLight);
-
-        // Back Rim Light (Glowing halo around orb edge)
-        this.rimLight = new THREE.PointLight(0xff1493, 6.5, 18);
-        this.rimLight.position.set(0, -0.8, -2.8);
-        this.scene.add(this.rimLight);
-    }
-
-    createCreature() {
-        this.creatureGroup = new THREE.Group();
-        this.scene.add(this.creatureGroup);
-
-        // 1. MAIN SPHERICAL HELMET / BODY (Radius 0.92, glossy cute finish)
-        const orbGeo = new THREE.SphereGeometry(0.92, 48, 48);
-        this.orbMaterial = new THREE.MeshPhysicalMaterial({
-            color: this.colorPink,
-            roughness: 0.18,
-            metalness: 0.08,
-            clearcoat: 0.95,
-            clearcoatRoughness: 0.08,
-            emissive: this.colorHotPink,
-            emissiveIntensity: 0.22,
-            reflectivity: 0.85
-        });
-        this.orbMesh = new THREE.Mesh(orbGeo, this.orbMaterial);
-        this.creatureGroup.add(this.orbMesh);
-
-        // 2. CURVED DIGITAL VISOR SCREEN (Centered on front face of sphere)
-        // phi centered at +Z (PI/2), theta centered at equator (PI/2)
-        const phiLength = 1.40; // ~80 degrees horizontally
-        const phiStart = Math.PI * 0.5 - (phiLength / 2);
-        const thetaLength = 0.65; // ~37 degrees vertically
-        const thetaStart = Math.PI * 0.5 - (thetaLength / 2);
-
-        const visorGeo = new THREE.SphereGeometry(0.926, 48, 32, phiStart, phiLength, thetaStart, thetaLength);
-
-        this.faceTexture = new THREE.CanvasTexture(this.faceCanvas);
-        this.faceTexture.colorSpace = THREE.SRGBColorSpace;
-
-        this.visorMaterial = new THREE.MeshPhysicalMaterial({
-            map: this.faceTexture,
-            emissiveMap: this.faceTexture,
-            emissive: new THREE.Color(0xffffff),
-            emissiveIntensity: 1.15,
-            transparent: true,
-            roughness: 0.12,
-            metalness: 0.15,
-            clearcoat: 1.0,
-            clearcoatRoughness: 0.05
-        });
-        this.visorMesh = new THREE.Mesh(visorGeo, this.visorMaterial);
-        this.creatureGroup.add(this.visorMesh);
-
-        // 3. CUTE ROBOTIC EAR PODS (Headphone capsules on left and right)
-        const earGeo = new THREE.CylinderGeometry(0.16, 0.16, 0.10, 24);
-        earGeo.rotateZ(Math.PI / 2);
-
-        const earMat = new THREE.MeshPhysicalMaterial({
-            color: 0x140412,
-            roughness: 0.22,
-            metalness: 0.5,
-            clearcoat: 0.85
-        });
-
-        this.leftEar = new THREE.Mesh(earGeo, earMat);
-        this.leftEar.position.set(-0.91, 0.02, 0);
-        this.creatureGroup.add(this.leftEar);
-
-        this.rightEar = new THREE.Mesh(earGeo, earMat);
-        this.rightEar.position.set(0.91, 0.02, 0);
-        this.creatureGroup.add(this.rightEar);
-
-        // Glowing Ear Accent Rings
-        const earRingGeo = new THREE.TorusGeometry(0.11, 0.022, 16, 24);
-        earRingGeo.rotateY(Math.PI / 2);
-
-        this.earRingMat = new THREE.MeshBasicMaterial({
-            color: this.colorHotPink
-        });
-
-        this.leftEarRing = new THREE.Mesh(earRingGeo, this.earRingMat);
-        this.leftEarRing.position.set(-0.965, 0.02, 0);
-        this.creatureGroup.add(this.leftEarRing);
-
-        this.rightEarRing = new THREE.Mesh(earRingGeo, this.earRingMat);
-        this.rightEarRing.position.set(0.965, 0.02, 0);
-        this.creatureGroup.add(this.rightEarRing);
-
-        // 4. TOP CREST INDICATOR (Small accent capsule on head crown)
-        const crestGeo = new THREE.CapsuleGeometry(0.04, 0.22, 8, 16);
-        crestGeo.rotateZ(Math.PI / 2);
-        this.topCrest = new THREE.Mesh(crestGeo, this.earRingMat);
-        this.topCrest.position.set(0, 0.90, 0.05);
-        this.creatureGroup.add(this.topCrest);
-    }
-
-    createAuraParticles() {
-        const particleCount = 60;
-        const positions = new Float32Array(particleCount * 3);
-        const colors = new Float32Array(particleCount * 3);
-        const tempColor = new THREE.Color();
-
-        for (let i = 0; i < particleCount; i++) {
-            const u = Math.random();
-            const v = Math.random();
-            const theta = u * 2.0 * Math.PI;
-            const phi = Math.acos(2.0 * v - 1.0);
-            const r = 1.25 + Math.random() * 0.70; // Proportionate orbit around 0.92 orb
-
-            positions[i * 3] = r * Math.sin(phi) * Math.cos(theta);
-            positions[i * 3 + 1] = r * Math.sin(phi) * Math.sin(theta);
-            positions[i * 3 + 2] = r * Math.cos(phi);
-
-            tempColor.setHSL(0.95 + Math.random() * 0.08, 0.9, 0.65);
-            colors[i * 3] = tempColor.r;
-            colors[i * 3 + 1] = tempColor.g;
-            colors[i * 3 + 2] = tempColor.b;
-        }
-
-        const auraGeo = new THREE.BufferGeometry();
-        auraGeo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-        auraGeo.setAttribute('color', new THREE.BufferAttribute(colors, 3));
-
-        // Create round glowing particle sprite
-        const spriteCanvas = document.createElement('canvas');
-        spriteCanvas.width = 32;
-        spriteCanvas.height = 32;
-        const ctx = spriteCanvas.getContext('2d');
-        const grad = ctx.createRadialGradient(16, 16, 0, 16, 16, 16);
-        grad.addColorStop(0, 'rgba(255, 255, 255, 1)');
-        grad.addColorStop(0.35, 'rgba(255, 77, 148, 0.85)');
-        grad.addColorStop(1, 'rgba(255, 0, 60, 0)');
-        ctx.fillStyle = grad;
-        ctx.beginPath();
-        ctx.arc(16, 16, 16, 0, Math.PI * 2);
-        ctx.fill();
-
-        const spriteTexture = new THREE.CanvasTexture(spriteCanvas);
-
-        const auraMat = new THREE.PointsMaterial({
-            size: 0.15,
-            vertexColors: true,
-            map: spriteTexture,
-            transparent: true,
-            opacity: 0.85,
-            blending: THREE.AdditiveBlending,
-            depthWrite: false
-        });
-
-        this.auraParticles = new THREE.Points(auraGeo, auraMat);
-        this.scene.add(this.auraParticles);
-    }
-
-    createShardPool() {
-        // Pool of 3D faceted shards that blast outward upon click explosion
-        const shardCount = 120;
-        const shardGeo = new THREE.TetrahedronGeometry(0.11, 0);
-
-        this.shardGroup = new THREE.Group();
-        this.scene.add(this.shardGroup);
-
-        for (let i = 0; i < shardCount; i++) {
-            const shardMat = new THREE.MeshPhysicalMaterial({
-                color: Math.random() > 0.4 ? this.colorBloodRed : 0xffffff,
-                emissive: this.colorBloodRed,
-                emissiveIntensity: 1.5,
-                roughness: 0.1,
-                metalness: 0.2
-            });
-
-            const shard = new THREE.Mesh(shardGeo, shardMat);
-            shard.visible = false;
-            shard.userData = {
-                velocity: new THREE.Vector3(),
-                rotVelocity: new THREE.Vector3(),
-                scale: 0.6 + Math.random() * 0.7
-            };
-            this.shardGroup.add(shard);
-            this.shardMeshes.push(shard);
-        }
-    }
+        this.circlePos.x = window.innerWidth / 2;
+        this.circlePos.y = window.innerHeight / 2;
+    };
 
     setupEventListeners() {
-        // Mouse Move on window -> Wake up and look at cursor
+        // Mouse Move -> Wake up and look at cursor
         window.addEventListener('mousemove', (e) => {
             const now = performance.now();
             if (!this.isMouseMoving && (now - this.lastMouseMoveTime) > 1000) {
-                this.alertTimer = 0.22; // Quick curious alert pop
+                this.alertTimer = 0.22; // Pop alert when mouse moves again
             }
             this.lastMouseMoveTime = now;
             this.isMouseMoving = true;
@@ -331,7 +100,6 @@ class Gatekeeper3D {
             this.screenMouse.x = e.clientX;
             this.screenMouse.y = e.clientY;
 
-            // Normalized Coordinates (-1 to 1)
             this.targetMouse.x = (e.clientX / window.innerWidth) * 2 - 1;
             this.targetMouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
         }, { passive: true });
@@ -352,42 +120,23 @@ class Gatekeeper3D {
             }
         }, { passive: true });
 
-        // Resize
-        window.addEventListener('resize', () => {
-            if (this.isDisposed) return;
-            const width = window.innerWidth;
-            const height = window.innerHeight;
+        window.addEventListener('resize', this.handleResize);
 
-            this.camera.aspect = width / height;
-            this.camera.updateProjectionMatrix();
-            this.renderer.setSize(width, height);
-            this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2.0));
-        });
-
-        // Click on Creature / Screen -> DETONATE DOMAIN
+        // Click on Circle / Screen -> DETONATE DOMAIN
         this.screen.addEventListener('click', (e) => {
             if (e.target.closest('#gatekeeperSkipBtn')) return;
 
-            const centerX = window.innerWidth / 2;
-            const centerY = window.innerHeight / 2;
-            const dist = Math.hypot(e.clientX - centerX, e.clientY - centerY);
-            const orbScreenRadius = Math.min(window.innerWidth, window.innerHeight) * 0.17;
+            const dx = e.clientX - this.circlePos.x;
+            const dy = e.clientY - this.circlePos.y;
+            const dist = Math.hypot(dx, dy);
 
-            // Direct strike on the creature or agitated detonation
-            if (dist <= orbScreenRadius || this.anger > 0.35) {
+            // Click within circle or when angry
+            if (dist <= (this.circleRadius * 1.5) || this.anger > 0.35) {
                 this.triggerExplosion();
             } else {
-                // If clicked far away, creature gets agitated and pulses towards cursor
+                // If clicked outside, creature gets slightly agitated
                 this.targetAnger = Math.min(1.0, this.targetAnger + 0.30);
                 this.anger = Math.min(1.0, this.anger + 0.25);
-                if (this.creatureGroup) {
-                    this.creatureGroup.scale.set(1.08, 0.92, 1.08);
-                    setTimeout(() => {
-                        if (this.creatureGroup && !this.isExploding) {
-                            this.creatureGroup.scale.set(1, 1, 1);
-                        }
-                    }, 150);
-                }
             }
         });
 
@@ -403,238 +152,159 @@ class Gatekeeper3D {
     updateProximity() {
         if (this.isExploding) return;
 
-        // Euclidean Distance from screen center to mouse cursor
-        const centerX = window.innerWidth / 2;
-        const centerY = window.innerHeight / 2;
-        const dx = this.screenMouse.x - centerX;
-        const dy = this.screenMouse.y - centerY;
+        const dx = this.screenMouse.x - this.circlePos.x;
+        const dy = this.screenMouse.y - this.circlePos.y;
         const dist = Math.hypot(dx, dy);
 
-        // Radius of activation (around 380px on desktop)
-        const maxDist = Math.min(window.innerWidth, window.innerHeight) * 0.42;
+        // Activation distance around 320px
+        const maxDist = Math.min(window.innerWidth, window.innerHeight) * 0.38;
         this.targetAnger = Math.max(0, Math.min(1, 1 - (dist / maxDist)));
 
-        // Smooth Lerp for organic emotional response
+        // Smooth Lerp for organic breathing response
         this.anger += (this.targetAnger - this.anger) * 0.085;
 
-        // Update Mouse Lerp
-        this.mouse.x += (this.targetMouse.x - this.mouse.x) * 0.12;
-        this.mouse.y += (this.targetMouse.y - this.mouse.y) * 0.12;
+        // Smooth Mouse Lerp
+        this.mouse.x += (this.targetMouse.x - this.mouse.x) * 0.14;
+        this.mouse.y += (this.targetMouse.y - this.mouse.y) * 0.14;
     }
 
     // ==========================================================================
-    // DYNAMIC DIGITAL VISOR 2D RENDERER (512x512 Canvas)
-    // Renders the exact stylized emoji expressions from the reference image:
-    // - Proximity Anger: Top-Left furious inward slanted eyes + red pout dot
-    // - Mouse Moving: Gaze tracking + funny "aadhi closed" side-eye squint
-    // - Mouse Stopped: Idle cycle (Happy ^ ^, Sleepy u u, Heart eyes <3 <3, Cyber pulse)
+    // 2D EYES RENDERING (SOLID FILL ONLY, NO MOUTH, NO BORDERS)
     // ==========================================================================
-    updateFaceCanvas(elapsedTime, delta) {
-        const ctx = this.faceCtx;
-        const cw = 512;
-        const ch = 512;
-        const cx = 256;
-        const cy = 256;
+    drawEyes(ctx, cx, cy, anger, timeSinceMove, elapsedTime) {
+        const isAngry = anger > 0.16;
+        const isIdle = !isAngry && (timeSinceMove > 1.2);
 
-        ctx.clearRect(0, 0, cw, ch);
+        // Base eye spacing inside 112px circle
+        const baseSpacing = 18;
+        const eyeBaseY = cy - 2;
 
-        const anger = this.anger;
-        const timeSinceMove = (performance.now() - this.lastMouseMoveTime) / 1000;
-        const isIdle = (timeSinceMove > 1.2) && (anger < 0.18);
-
-        if (this.alertTimer > 0) {
-            this.alertTimer = Math.max(0, this.alertTimer - delta);
-        }
-
-        // 1. DRAW DARK VISOR SCREEN BASE (Rounded Stadium Shape)
-        const vx = 76;
-        const vy = 110;
-        const vw = 360;
-        const vh = 240;
-        const vr = 78;
-
-        ctx.save();
-        ctx.beginPath();
-        ctx.roundRect(vx, vy, vw, vh, vr);
-        ctx.clip();
-
-        // Visor Screen Background (Dark OLED gradient, red glow when angry)
-        const grad = ctx.createRadialGradient(cx, cy, 30, cx, cy, 190);
-        if (anger > 0.2) {
-            const redCore = Math.round(55 * anger);
-            grad.addColorStop(0, `rgb(${redCore + 25}, 0, 16)`);
-            grad.addColorStop(0.7, `rgb(${redCore}, 0, 8)`);
-            grad.addColorStop(1, '#050004');
-        } else {
-            grad.addColorStop(0, '#160418');
-            grad.addColorStop(0.7, '#0a010c');
-            grad.addColorStop(1, '#020003');
-        }
-        ctx.fillStyle = grad;
-        ctx.fillRect(vx, vy, vw, vh);
-
-        // Curved Glass Reflection Highlight (Subtle glossy sheen)
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.05)';
-        ctx.beginPath();
-        ctx.ellipse(cx, vy + 40, 140, 26, 0, 0, Math.PI * 2);
-        ctx.fill();
-
-        // 2. EXPRESSIONS DRAWING
-        if (anger > 0.18) {
+        if (isAngry) {
             // ==============================================================
-            // A. ANGRY EXPRESSION (Reference Image Top-Left)
-            // Fierce inward-slanted curved wedges \  / + glowing red pout dot
+            // 1. ANGRY EYES (Reference Image Top-Left)
+            // Solid inward-slanted wedges \  / (NO BORDER, NO MOUTH)
             // ==============================================================
-            const gazeX = this.mouse.x * 22;
-            const gazeY = -this.mouse.y * 15;
+            const gazeX = this.mouse.x * 6;
+            const gazeY = -this.mouse.y * 4;
 
-            const eyeColor = '#ff0038';
-            ctx.shadowColor = eyeColor;
-            ctx.shadowBlur = 24;
-            ctx.fillStyle = eyeColor;
+            const lx = cx - baseSpacing + gazeX;
+            const rx = cx + baseSpacing + gazeX;
+            const ly = eyeBaseY + gazeY;
+
+            ctx.fillStyle = '#0a0106'; // Solid pitch dark carbon
+            ctx.shadowColor = '#ff0038';
+            ctx.shadowBlur = 10 * anger;
 
             // Left Eye: Inward slanted wedge (\)
-            const lx = cx - 68 + gazeX;
-            const ly = cy - 10 + gazeY;
-
             ctx.beginPath();
-            ctx.moveTo(lx - 42, ly - 22);
-            ctx.lineTo(lx + 34, ly + 8);
-            ctx.lineTo(lx + 20, ly + 32);
-            ctx.bezierCurveTo(lx - 18, ly + 34, lx - 46, ly + 12, lx - 42, ly - 22);
+            ctx.moveTo(lx - 13, ly - 9);
+            ctx.lineTo(lx + 11, ly + 2);
+            ctx.lineTo(lx + 7, ly + 11);
+            ctx.bezierCurveTo(lx - 5, ly + 12, lx - 15, ly + 3, lx - 13, ly - 9);
             ctx.closePath();
             ctx.fill();
 
             // Right Eye: Inward slanted wedge (/)
-            const rx = cx + 68 + gazeX;
-            const ry = cy - 10 + gazeY;
-
             ctx.beginPath();
-            ctx.moveTo(rx + 42, ry - 22);
-            ctx.lineTo(rx - 34, ry + 8);
-            ctx.lineTo(rx - 20, ry + 32);
-            ctx.bezierCurveTo(rx + 18, ry + 34, rx + 46, ry + 12, rx + 42, ry - 22);
+            ctx.moveTo(rx + 13, ly - 9);
+            ctx.lineTo(rx - 11, ly + 2);
+            ctx.lineTo(rx - 7, ly + 11);
+            ctx.bezierCurveTo(rx + 5, ly + 12, rx + 15, ly + 3, rx + 13, ly - 9);
             ctx.closePath();
-            ctx.fill();
-
-            // Angry Glowing Red Pout Mouth (From top-left robot)
-            ctx.beginPath();
-            ctx.arc(cx + gazeX * 0.5, cy + 48 + gazeY * 0.5, 11, 0, Math.PI * 2);
             ctx.fill();
 
         } else if (isIdle) {
             // ==============================================================
-            // B. IDLE EXPRESSIONS CYCLE (When cursor stops moving > 1.2s)
-            // Cycles every 3.2s:
-            // 0: Happy (^ ^ + smile), 1: Sleepy (u u), 2: Heart eyes (<3 <3), 3: Cyber Pulse (ECG)
+            // 2. IDLE EXPRESSIONS (When cursor stops > 1.2s, NO MOUTH, NO BORDER)
+            // Cycles every 3.2s: Happy (^ ^), Sleepy (u u), Heart eyes (<3 <3), Side-glance
             // ==============================================================
             const idleTime = timeSinceMove - 1.2;
-            const moodIndex = Math.floor(idleTime / 3.4) % 4;
+            const moodIndex = Math.floor(idleTime / 3.2) % 4;
 
-            const neonPink = '#ff4d94';
-            ctx.shadowColor = neonPink;
-            ctx.shadowBlur = 20;
-            ctx.strokeStyle = neonPink;
-            ctx.fillStyle = neonPink;
+            ctx.fillStyle = '#0f020a';
+            ctx.strokeStyle = '#0f020a';
+            ctx.shadowColor = '#ff4d94';
+            ctx.shadowBlur = 6;
+
+            const lx = cx - baseSpacing;
+            const rx = cx + baseSpacing;
 
             if (moodIndex === 0) {
-                // MOOD 0: HAPPY CHEEKY (^   ^ + smile)
-                const bounceY = Math.sin(elapsedTime * 6) * 4;
-                ctx.lineWidth = 13;
+                // MOOD 0: HAPPY CHEEKY (^   ^)
+                const bounceY = Math.sin(elapsedTime * 6) * 2.5;
+                ctx.lineWidth = 5.5;
                 ctx.lineCap = 'round';
 
                 // Left happy arch
                 ctx.beginPath();
-                ctx.arc(cx - 68, cy - 6 + bounceY, 26, Math.PI * 0.85, Math.PI * 0.15, true);
+                ctx.arc(lx, eyeBaseY - 2 + bounceY, 10, Math.PI * 0.85, Math.PI * 0.15, true);
                 ctx.stroke();
 
                 // Right happy arch
                 ctx.beginPath();
-                ctx.arc(cx + 68, cy - 6 + bounceY, 26, Math.PI * 0.85, Math.PI * 0.15, true);
+                ctx.arc(rx, eyeBaseY - 2 + bounceY, 10, Math.PI * 0.85, Math.PI * 0.15, true);
                 ctx.stroke();
 
-                // Smile curve
+                // Cute subtle blush dots on cheeks (no mouth!)
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.45)';
+                ctx.shadowBlur = 0;
                 ctx.beginPath();
-                ctx.arc(cx, cy + 34 + bounceY, 18, 0.15, Math.PI - 0.15, false);
-                ctx.stroke();
-
-                // Blushing cheeks
-                ctx.fillStyle = 'rgba(255, 26, 107, 0.5)';
-                ctx.beginPath();
-                ctx.arc(cx - 110, cy + 18 + bounceY, 8, 0, Math.PI * 2);
-                ctx.arc(cx + 110, cy + 18 + bounceY, 8, 0, Math.PI * 2);
+                ctx.arc(lx - 12, eyeBaseY + 9 + bounceY, 3, 0, Math.PI * 2);
+                ctx.arc(rx + 12, eyeBaseY + 9 + bounceY, 3, 0, Math.PI * 2);
                 ctx.fill();
 
             } else if (moodIndex === 1) {
-                // MOOD 1: SLEEPY / CHILLING (u   u)
-                const breathY = Math.sin(elapsedTime * 2.2) * 3;
-                ctx.lineWidth = 12;
+                // MOOD 1: SLEEPY / CHILL (u   u)
+                const breathY = Math.sin(elapsedTime * 2.2) * 2;
+                ctx.lineWidth = 5;
                 ctx.lineCap = 'round';
 
-                // Left sleepy curved lid
+                // Left sleepy arch
                 ctx.beginPath();
-                ctx.arc(cx - 68, cy - 12 + breathY, 25, Math.PI * 0.15, Math.PI * 0.85, false);
+                ctx.arc(lx, eyeBaseY - 4 + breathY, 9, Math.PI * 0.15, Math.PI * 0.85, false);
                 ctx.stroke();
 
-                // Right sleepy curved lid
+                // Right sleepy arch
                 ctx.beginPath();
-                ctx.arc(cx + 68, cy - 12 + breathY, 25, Math.PI * 0.15, Math.PI * 0.85, false);
-                ctx.stroke();
-
-                // Relaxed small mouth
-                ctx.beginPath();
-                ctx.arc(cx, cy + 36 + breathY, 10, Math.PI * 0.2, Math.PI * 0.8, false);
+                ctx.arc(rx, eyeBaseY - 4 + breathY, 9, Math.PI * 0.15, Math.PI * 0.85, false);
                 ctx.stroke();
 
             } else if (moodIndex === 2) {
                 // MOOD 2: HEART EYES (<3   <3)
-                const heartScale = 1.0 + Math.sin(elapsedTime * 5) * 0.12;
+                const heartScale = 0.58 + Math.sin(elapsedTime * 5) * 0.06;
 
                 const drawHeart = (hx, hy) => {
                     ctx.save();
                     ctx.translate(hx, hy);
                     ctx.scale(heartScale, heartScale);
                     ctx.beginPath();
-                    ctx.moveTo(0, 12);
-                    ctx.bezierCurveTo(-22, -10, -26, -30, 0, -32);
-                    ctx.bezierCurveTo(26, -30, 22, -10, 0, 12);
+                    ctx.moveTo(0, 8);
+                    ctx.bezierCurveTo(-14, -6, -18, -20, 0, -22);
+                    ctx.bezierCurveTo(18, -20, 14, -6, 0, 8);
                     ctx.fill();
                     ctx.restore();
                 };
 
-                drawHeart(cx - 68, cy - 8);
-                drawHeart(cx + 68, cy - 8);
-
-                // Sweet smile
-                ctx.lineWidth = 11;
-                ctx.lineCap = 'round';
-                ctx.beginPath();
-                ctx.arc(cx, cy + 32, 16, 0.2, Math.PI - 0.2, false);
-                ctx.stroke();
+                drawHeart(lx, eyeBaseY - 2);
+                drawHeart(rx, eyeBaseY - 2);
 
             } else {
-                // MOOD 3: CYBER PULSE LINE (Heartbeat ECG wave across visor)
-                ctx.lineWidth = 9;
-                ctx.lineCap = 'round';
-                ctx.lineJoin = 'round';
-
-                const offset = (elapsedTime * 220) % 240;
+                // MOOD 3: FUNNY SIDE-GLANCE (¬   ¬)
+                const lookDirection = Math.sin(elapsedTime * 1.5) > 0 ? 1 : -1;
+                const glx = lx + lookDirection * 7;
+                const grx = rx + lookDirection * 7;
 
                 ctx.beginPath();
-                ctx.moveTo(vx + 30, cy);
-                ctx.lineTo(cx - 80 + offset * 0.2, cy);
-                ctx.lineTo(cx - 45 + offset * 0.2, cy - 38);
-                ctx.lineTo(cx - 15 + offset * 0.2, cy + 42);
-                ctx.lineTo(cx + 20 + offset * 0.2, cy - 25);
-                ctx.lineTo(cx + 45 + offset * 0.2, cy);
-                ctx.lineTo(vx + vw - 30, cy);
-                ctx.stroke();
+                ctx.roundRect(glx - 6, eyeBaseY - 5, 12, 10, 4);
+                ctx.roundRect(grx - 6, eyeBaseY - 5, 12, 10, 4);
+                ctx.fill();
             }
 
         } else {
             // ==============================================================
-            // C. ACTIVE CURSOR TRACKING (Follows mouse cursor instantly)
+            // 3. ACTIVE CURSOR TRACKING (Follows mouse instantly)
             // With funny "aadhi closed" (half-closed) side-eye squint
+            // NO BORDER, NO MOUTH
             // ==============================================================
             const gazeX = this.mouse.x;
             const gazeY = -this.mouse.y;
@@ -647,26 +317,25 @@ class Gatekeeper3D {
                 blinkFactor = Math.abs(Math.sin(phase * Math.PI - Math.PI / 2)) * 0.85 + 0.15;
             }
 
-            // Alert pop expansion when cursor starts moving
+            // Alert pop expansion when cursor starts moving again
             let alertBoost = 0;
             if (this.alertTimer > 0) {
-                alertBoost = (this.alertTimer / 0.22) * 16;
+                alertBoost = (this.alertTimer / 0.22) * 6;
             }
 
-            // Funny side-eye squint: tracking sideways squishes eyes into funny half-closed look
+            // Funny side-eye squint: tracking horizontally squishes eyes into funny half-closed look
             const horizGaze = Math.abs(gazeX);
-            const eyeHeight = Math.max(6, (52 - horizGaze * 22 + alertBoost) * blinkFactor);
-            const eyeWidth = 36 + horizGaze * 10;
-            const tilt = gazeX * 0.15; // Comical tilt in gaze direction
+            const eyeHeight = Math.max(3, (21 - horizGaze * 9 + alertBoost) * blinkFactor);
+            const eyeWidth = 12 + horizGaze * 4;
+            const tilt = gazeX * 0.16; // Comical tilt in gaze direction
 
-            const eyeColor = '#ff4d94';
-            ctx.shadowColor = eyeColor;
-            ctx.shadowBlur = 18;
-            ctx.fillStyle = eyeColor;
+            ctx.fillStyle = '#0f020a'; // Solid dark carbon
+            ctx.shadowColor = 'transparent';
+            ctx.shadowBlur = 0;
 
             const drawTrackingEye = (baseX) => {
-                const ex = baseX + gazeX * 36;
-                const ey = cy - 6 + gazeY * 24;
+                const ex = baseX + gazeX * 11;
+                const ey = eyeBaseY + gazeY * 8;
 
                 ctx.save();
                 ctx.translate(ex, ey);
@@ -675,103 +344,108 @@ class Gatekeeper3D {
                 ctx.roundRect(-eyeWidth / 2, -eyeHeight / 2, eyeWidth, eyeHeight, eyeWidth / 2);
                 ctx.fill();
 
-                // Cute specular glint highlight inside eye
-                if (eyeHeight > 24) {
+                // Cute white anime glint highlight dot (top-right of eye)
+                if (eyeHeight > 10) {
                     ctx.fillStyle = '#ffffff';
-                    ctx.shadowBlur = 0;
                     ctx.beginPath();
-                    ctx.arc(eyeWidth * 0.15, -eyeHeight * 0.2, 5, 0, Math.PI * 2);
+                    ctx.arc(eyeWidth * 0.18, -eyeHeight * 0.22, 1.8, 0, Math.PI * 2);
                     ctx.fill();
                 }
                 ctx.restore();
             };
 
-            drawTrackingEye(cx - 72);
-            drawTrackingEye(cx + 72);
+            drawTrackingEye(cx - baseSpacing);
+            drawTrackingEye(cx + baseSpacing);
         }
-
-        // 3. VISOR GLOWING BORDER STROKE
-        ctx.restore(); // Restore clip
-        ctx.lineWidth = 3.5;
-        if (anger > 0.2) {
-            ctx.strokeStyle = `rgba(255, 0, 60, ${0.45 + anger * 0.45})`;
-            ctx.shadowColor = '#ff0038';
-            ctx.shadowBlur = 16;
-        } else {
-            ctx.strokeStyle = 'rgba(255, 77, 148, 0.38)';
-            ctx.shadowColor = '#ff4d94';
-            ctx.shadowBlur = 10;
-        }
-        ctx.beginPath();
-        ctx.roundRect(vx, vy, vw, vh, vr);
-        ctx.stroke();
-
-        this.faceTexture.needsUpdate = true;
     }
 
-    updateAppearance(elapsedTime, delta) {
-        if (this.isExploding) return;
+    draw(elapsedTime) {
+        const ctx = this.ctx;
+        const width = window.innerWidth;
+        const height = window.innerHeight;
+
+        ctx.clearRect(0, 0, width, height);
+
+        if (this.isExploding) {
+            // Render 2D particles
+            this.particles.forEach(p => {
+                if (p.alpha <= 0) return;
+                ctx.save();
+                ctx.globalAlpha = p.alpha;
+                ctx.fillStyle = p.color;
+                ctx.shadowColor = p.color;
+                ctx.shadowBlur = 8;
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.radius * p.scale, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
+            });
+            return;
+        }
 
         const anger = this.anger;
+        const timeSinceMove = (performance.now() - this.lastMouseMoveTime) / 1000;
 
-        // 1. Dynamic Color Blending: Pink (0.0) -> Crimson Rage Red (1.0)
-        const currentColor = new THREE.Color().lerpColors(this.colorPink, this.colorBloodRed, anger);
-        const currentEmissive = new THREE.Color().lerpColors(this.colorHotPink, this.colorDarkRage, anger);
+        // Subtle vertical idle breathing bob
+        const idleBob = Math.sin(elapsedTime * 2.2) * 3.5;
 
-        if (this.orbMaterial) {
-            this.orbMaterial.color.copy(currentColor);
-            this.orbMaterial.emissive.copy(currentEmissive);
-            this.orbMaterial.emissiveIntensity = 0.20 + anger * 1.1;
+        // Subtle tight tension hum when angry (NO violent shaking)
+        let tensionX = 0;
+        let tensionY = 0;
+        if (anger > 0.12) {
+            const freq = 30;
+            const amp = anger * 1.5; // Max 1.5px subtle tension
+            tensionX = Math.sin(elapsedTime * freq) * amp;
+            tensionY = Math.cos(elapsedTime * (freq * 1.15)) * (amp * 0.7);
         }
 
-        // Ear accents sync with rage
-        if (this.earRingMat) {
-            this.earRingMat.color.lerpColors(this.colorHotPink, this.colorBloodRed, anger);
+        const cx = this.circlePos.x + tensionX;
+        const cy = this.circlePos.y + idleBob + tensionY;
+        const r = this.circleRadius;
+
+        // 1. DRAW 2D COMPACT CIRCLE (Soft Pink -> Blood Red on anger)
+        const pinkGrad = ctx.createRadialGradient(cx - r * 0.2, cy - r * 0.25, 4, cx, cy, r);
+        if (anger > 0.05) {
+            // Blend from soft pink to menacing blood red
+            const rVal = 255;
+            const gVal = Math.round(77 * (1 - anger) + 10 * anger);
+            const bVal = Math.round(148 * (1 - anger) + 24 * anger);
+            const edgeR = Math.round(255 * (1 - anger) + 160 * anger);
+            const edgeG = Math.round(26 * (1 - anger));
+            const edgeB = Math.round(107 * (1 - anger));
+
+            pinkGrad.addColorStop(0, `rgb(${rVal}, ${gVal}, ${bVal})`);
+            pinkGrad.addColorStop(0.75, `rgb(${edgeR}, ${edgeG}, ${edgeB})`);
+            pinkGrad.addColorStop(1, anger > 0.4 ? '#8a0014' : '#d60a5e');
+        } else {
+            // Radiant cute rose pink
+            pinkGrad.addColorStop(0, '#ff66a8');
+            pinkGrad.addColorStop(0.75, '#ff2e82');
+            pinkGrad.addColorStop(1, '#e6126c');
         }
 
-        // Lighting intensity increases with fury
-        if (this.keyLight) {
-            this.keyLight.color.copy(currentColor);
-            this.keyLight.intensity = 5.0 + anger * 8.5;
-        }
+        // Soft Circle Shadow Glow
+        ctx.save();
+        ctx.shadowColor = anger > 0.25 ? '#ff0038' : '#ff4d94';
+        ctx.shadowBlur = 16 + anger * 14;
+        ctx.fillStyle = pinkGrad;
+        ctx.beginPath();
+        ctx.arc(cx, cy, r, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
 
-        // 2. Creature Idle Breathing, Perspective Gaze & SUBTLE TENSION (No violent shake)
-        if (this.creatureGroup) {
-            const idleBob = Math.sin(elapsedTime * 2.0) * 0.07;
+        // Subtle 2D Glossy Sticker Glint (Top-Left of circle)
+        ctx.save();
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.26)';
+        ctx.beginPath();
+        ctx.ellipse(cx - r * 0.35, cy - r * 0.38, r * 0.38, r * 0.20, -Math.PI / 4, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
 
-            // Tight, subtle tension hum when angry (drastically reduced from previous violent shake)
-            let tensionX = 0;
-            let tensionY = 0;
-            if (anger > 0.12) {
-                const tensionFreq = 28.0;
-                const tensionAmp = anger * 0.008; // Subtle hum (~1px)
-                tensionX = Math.sin(elapsedTime * tensionFreq) * tensionAmp;
-                tensionY = Math.cos(elapsedTime * (tensionFreq * 1.12)) * (tensionAmp * 0.65);
-            }
+        // 2. DRAW EYES ONLY (NO MOUTH, NO BORDERS!)
+        this.drawEyes(ctx, cx, cy, anger, timeSinceMove, elapsedTime);
 
-            this.creatureGroup.position.x = tensionX;
-            this.creatureGroup.position.y = idleBob + tensionY;
-
-            // 3D Perspective Rotation towards mouse cursor
-            this.creatureGroup.rotation.y = this.mouse.x * 0.35;
-            this.creatureGroup.rotation.x = -this.mouse.y * 0.26;
-
-            // Subtle tense clench when enraged
-            const clenchY = 1.0 - anger * 0.05;
-            const clenchXZ = 1.0 + anger * 0.025;
-            this.creatureGroup.scale.set(clenchXZ, clenchY, clenchXZ);
-        }
-
-        // 3. Render Dynamic Digital Visor Screen
-        this.updateFaceCanvas(elapsedTime, delta);
-
-        // 4. Orbiting Aura Particles acceleration
-        if (this.auraParticles) {
-            this.auraParticles.rotation.y += 0.008 + anger * 0.035;
-            this.auraParticles.rotation.x += 0.004 + anger * 0.018;
-        }
-
-        // 5. DOM HUD Feedback
+        // 3. DOM HUD FEEDBACK
         if (this.threatFill) {
             this.threatFill.style.width = `${Math.min(100, Math.round(anger * 100))}%`;
         }
@@ -793,12 +467,12 @@ class Gatekeeper3D {
             const glowR = Math.round(255);
             const glowG = Math.round(77 * (1 - anger));
             const glowB = Math.round(148 * (1 - anger) + 60 * anger);
-            const glowAlpha = 0.24 + anger * 0.38;
+            const glowAlpha = 0.22 + anger * 0.35;
             this.ambientGlow.style.background = `radial-gradient(circle, rgba(${glowR}, ${glowG}, ${glowB}, ${glowAlpha}) 0%, rgba(255, 0, 60, ${glowAlpha * 0.5}) 45%, transparent 70%)`;
-            this.ambientGlow.style.transform = `translate(-50%, -50%) scale(${1 + anger * 0.28})`;
+            this.ambientGlow.style.transform = `translate(-50%, -50%) scale(${1 + anger * 0.25})`;
         }
 
-        // 6. Sync Custom Blood Cursor Trail with rage
+        // 4. Sync Custom Blood Cursor Trail with rage
         const cursorTrail = document.getElementById('cursorTrail');
         if (cursorTrail && !this.isDisposed) {
             if (anger > 0.45) {
@@ -869,36 +543,29 @@ class Gatekeeper3D {
 
         this.playShatterAudio();
 
-        // 1. Implosion & Visual Blast Preparation
-        if (this.orbMesh) this.orbMesh.visible = false;
-        if (this.visorMesh) this.visorMesh.visible = false;
-        if (this.leftEar) this.leftEar.visible = false;
-        if (this.rightEar) this.rightEar.visible = false;
-        if (this.leftEarRing) this.leftEarRing.visible = false;
-        if (this.rightEarRing) this.rightEarRing.visible = false;
-        if (this.topCrest) this.topCrest.visible = false;
-        if (this.auraParticles) this.auraParticles.visible = false;
+        // Spawn 2D Explosion Particles
+        const count = 75;
+        this.particles = [];
+        const cx = this.circlePos.x;
+        const cy = this.circlePos.y;
 
-        // Activate 3D Shards
-        this.shardMeshes.forEach(shard => {
-            shard.visible = true;
-            // Spawn around sphere surface of radius 0.92
-            const dir = new THREE.Vector3(
-                (Math.random() - 0.5) * 2,
-                (Math.random() - 0.5) * 2,
-                (Math.random() - 0.5) * 2
-            ).normalize();
+        for (let i = 0; i < count; i++) {
+            const angle = Math.random() * Math.PI * 2;
+            const speed = 4 + Math.random() * 12;
+            this.particles.push({
+                x: cx + Math.cos(angle) * (Math.random() * this.circleRadius),
+                y: cy + Math.sin(angle) * (Math.random() * this.circleRadius),
+                vx: Math.cos(angle) * speed,
+                vy: Math.sin(angle) * speed,
+                radius: 2.5 + Math.random() * 5.0,
+                scale: 1.0,
+                alpha: 1.0,
+                color: Math.random() > 0.4 ? '#ff0038' : (Math.random() > 0.5 ? '#ff4d94' : '#ffffff'),
+                friction: 0.94 + Math.random() * 0.03
+            });
+        }
 
-            shard.position.copy(dir.clone().multiplyScalar(0.92));
-            shard.userData.velocity.copy(dir.multiplyScalar(8.0 + Math.random() * 15.0));
-            shard.userData.rotVelocity.set(
-                (Math.random() - 0.5) * 12.0,
-                (Math.random() - 0.5) * 12.0,
-                (Math.random() - 0.5) * 12.0
-            );
-        });
-
-        // 2. Fullscreen Shockwave & Flash DOM animation
+        // Fullscreen Shockwave & Flash DOM animation
         if (typeof gsap !== 'undefined') {
             if (this.flash) {
                 gsap.fromTo(this.flash,
@@ -967,46 +634,39 @@ class Gatekeeper3D {
                 ease: 'power3.out'
             });
         }
-
-        // Clean up WebGL resources
-        setTimeout(() => {
-            try {
-                this.renderer.dispose();
-                this.scene.clear();
-            } catch (e) {}
-        }, 1000);
     }
 
     animate = () => {
         if (this.isDisposed) return;
         requestAnimationFrame(this.animate);
 
-        const delta = this.clock.getDelta();
-        const elapsedTime = this.clock.getElapsedTime();
+        const now = performance.now();
+        const delta = Math.min((now - this.lastTime) / 1000, 0.1);
+        this.lastTime = now;
+        this.elapsedTime += delta;
 
         if (!this.isExploding) {
             this.updateProximity();
-            this.updateAppearance(elapsedTime, delta);
+            if (this.alertTimer > 0) {
+                this.alertTimer = Math.max(0, this.alertTimer - delta);
+            }
         } else {
-            // Animate 3D explosion shards
-            this.shardMeshes.forEach(shard => {
-                if (!shard.visible) return;
-                shard.position.addScaledVector(shard.userData.velocity, delta);
-                shard.rotation.x += shard.userData.rotVelocity.x * delta;
-                shard.rotation.y += shard.userData.rotVelocity.y * delta;
-                shard.rotation.z += shard.userData.rotVelocity.z * delta;
-
-                // Air friction slowdown & scale decay
-                shard.userData.velocity.multiplyScalar(0.965);
-                shard.scale.multiplyScalar(0.975);
+            // Animate particles
+            this.particles.forEach(p => {
+                p.x += p.vx;
+                p.y += p.vy;
+                p.vx *= p.friction;
+                p.vy *= p.friction;
+                p.alpha = Math.max(0, p.alpha - delta * 1.4);
+                p.scale = Math.max(0, p.scale - delta * 0.5);
             });
         }
 
-        this.renderer.render(this.scene, this.camera);
+        this.draw(this.elapsedTime);
     };
 }
 
 // Instantiate upon DOM Load
 document.addEventListener('DOMContentLoaded', () => {
-    window.gatekeeper = new Gatekeeper3D();
+    window.gatekeeper = new Gatekeeper2D();
 });
