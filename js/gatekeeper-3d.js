@@ -32,8 +32,14 @@ class Gatekeeper3D {
         // Color Palettes
         this.colorPink = new THREE.Color(0xff4d94);      // Radiant Neon Rose Pink
         this.colorHotPink = new THREE.Color(0xff1a6b);   // Cursed Fuchsia
-        this.colorBloodRed = new THREE.Color(0xff0038);  // Menacing Cursed Blood Red
-        this.colorDarkRage = new THREE.Color(0x800014);  // Deep Abyssal Crimson
+        this.colorBloodRed = new THREE.Color(0xd60029);  // Menacing Cursed Blood Red
+        this.colorDarkRage = new THREE.Color(0x660010);  // Deep Abyssal Crimson
+
+        // Eye Color States
+        this.eyeCalmColor = new THREE.Color(0x0e0208);      // Sleek Glossy Dark Obsidian
+        this.eyeCalmEmissive = new THREE.Color(0x260013);   // Subtle Dark Plum Sheen
+        this.eyeAngryColor = new THREE.Color(0xff002b);     // Blazing Pure Blood Red
+        this.eyeAngryEmissive = new THREE.Color(0xff0015);  // Scorching Laser Red
 
         // Three.js Core Components
         this.scene = null;
@@ -45,14 +51,13 @@ class Gatekeeper3D {
         this.creatureGroup = null;
         this.orbMesh = null;
         this.orbMaterial = null;
-        this.leftEyeGroup = null;
-        this.rightEyeGroup = null;
-        this.leftPupil = null;
-        this.rightPupil = null;
-        this.leftEyelidUpper = null;
-        this.rightEyelidUpper = null;
-        this.leftEyelidLower = null;
-        this.rightEyelidLower = null;
+
+        // Stylized Rectangle Eyes (Anchors + Pill/Capsule Meshes)
+        this.leftEyeAnchor = null;
+        this.rightEyeAnchor = null;
+        this.leftEyeMesh = null;
+        this.rightEyeMesh = null;
+        this.eyeMaterial = null;
 
         // Aura Particles & Shards
         this.auraParticles = null;
@@ -93,7 +98,7 @@ class Gatekeeper3D {
 
         const aspect = window.innerWidth / window.innerHeight;
         this.camera = new THREE.PerspectiveCamera(45, aspect, 0.1, 100);
-        this.camera.position.set(0, 0, 7.8);
+        this.camera.position.set(0, 0, 6.6); // Compact, centered framing for smaller orb
 
         const dpr = Math.min(window.devicePixelRatio || 1, 2.0);
         this.renderer = new THREE.WebGLRenderer({
@@ -114,18 +119,18 @@ class Gatekeeper3D {
         this.scene.add(this.ambientLight);
 
         // Key Light (Transforms with anger from Rose Pink to Pure Crimson Red)
-        this.keyLight = new THREE.PointLight(0xff4d94, 6.0, 30);
-        this.keyLight.position.set(3.2, 3.0, 5.0);
+        this.keyLight = new THREE.PointLight(0xff4d94, 5.5, 25);
+        this.keyLight.position.set(2.8, 2.6, 4.2);
         this.scene.add(this.keyLight);
 
         // Fill Light (Crisp specular sheen)
         this.fillLight = new THREE.DirectionalLight(0xffffff, 1.4);
-        this.fillLight.position.set(-3.5, 2.5, 4.0);
+        this.fillLight.position.set(-3.0, 2.2, 3.5);
         this.scene.add(this.fillLight);
 
         // Back Rim Light (Glowing halo around orb edge)
-        this.rimLight = new THREE.PointLight(0xff1493, 7.5, 20);
-        this.rimLight.position.set(0, -1.0, -3.2);
+        this.rimLight = new THREE.PointLight(0xff1493, 6.5, 18);
+        this.rimLight.position.set(0, -0.8, -2.8);
         this.scene.add(this.rimLight);
     }
 
@@ -133,146 +138,74 @@ class Gatekeeper3D {
         this.creatureGroup = new THREE.Group();
         this.scene.add(this.creatureGroup);
 
-        // 1. MAIN SPHERICAL BODY (Glossy, translucent physical sphere)
-        const orbGeo = new THREE.SphereGeometry(1.65, 64, 64);
+        // 1. MAIN SPHERICAL BODY (Scaled down to compact, cute radius 0.95)
+        const orbGeo = new THREE.SphereGeometry(0.95, 64, 64);
         this.orbMaterial = new THREE.MeshPhysicalMaterial({
             color: this.colorPink,
-            roughness: 0.22,
-            metalness: 0.1,
-            clearcoat: 0.9,
-            clearcoatRoughness: 0.12,
+            roughness: 0.20,
+            metalness: 0.08,
+            clearcoat: 0.95,
+            clearcoatRoughness: 0.10,
             emissive: this.colorHotPink,
-            emissiveIntensity: 0.25,
+            emissiveIntensity: 0.22,
             reflectivity: 0.85
         });
         this.orbMesh = new THREE.Mesh(orbGeo, this.orbMaterial);
         this.creatureGroup.add(this.orbMesh);
 
-        // 2. THE EYES (No mouth, just two striking sentient 3D eyes)
-        const eyeOffset = 0.58;
-        const eyeHeight = 0.22;
-        const eyeForward = 1.46;
+        // 2. MINIMALIST STYLIZED RECTANGLE / CAPSULE EYES
+        // Clean cartoon vertical rounded rectangles on the surface of the sphere
+        const eyeGeo = new THREE.CapsuleGeometry(0.046, 0.20, 10, 20);
 
-        this.leftEyeGroup = this.createSingleEye(-eyeOffset, eyeHeight, eyeForward, true);
-        this.rightEyeGroup = this.createSingleEye(eyeOffset, eyeHeight, eyeForward, false);
-
-        this.creatureGroup.add(this.leftEyeGroup);
-        this.creatureGroup.add(this.rightEyeGroup);
-    }
-
-    createSingleEye(x, y, z, isLeft) {
-        const eyeAnchor = new THREE.Group();
-        eyeAnchor.position.set(x, y, z);
-
-        // Sclera (Gleaming white eye bed)
-        const scleraGeo = new THREE.SphereGeometry(0.38, 32, 32);
-        scleraGeo.scale(1.0, 1.25, 0.45);
-        const scleraMat = new THREE.MeshStandardMaterial({
-            color: 0xffffff,
-            roughness: 0.15,
-            metalness: 0.05,
-            emissive: 0xffffff,
+        this.eyeMaterial = new THREE.MeshPhysicalMaterial({
+            color: this.eyeCalmColor.clone(),
+            roughness: 0.12,
+            metalness: 0.15,
+            clearcoat: 1.0,
+            clearcoatRoughness: 0.08,
+            emissive: this.eyeCalmEmissive.clone(),
             emissiveIntensity: 0.35
         });
-        const sclera = new THREE.Mesh(scleraGeo, scleraMat);
-        eyeAnchor.add(sclera);
 
-        // Iris & Pupil Group (Tracks mouse movement in eye socket)
-        const pupilGroup = new THREE.Group();
-        pupilGroup.position.set(0, 0, 0.18);
+        // Left Eye Anchor & Mesh
+        this.leftEyeAnchor = new THREE.Group();
+        this.leftEyeMesh = new THREE.Mesh(eyeGeo, this.eyeMaterial);
+        this.leftEyeAnchor.add(this.leftEyeMesh);
 
-        // Dark obsidian iris
-        const irisGeo = new THREE.SphereGeometry(0.24, 32, 32);
-        irisGeo.scale(1.0, 1.15, 0.45);
-        const irisMat = new THREE.MeshPhysicalMaterial({
-            color: 0x050103,
-            roughness: 0.1,
-            metalness: 0.2,
-            clearcoat: 1.0,
-            emissive: 0xff0044,
-            emissiveIntensity: 1.2
-        });
-        const iris = new THREE.Mesh(irisGeo, irisMat);
-        pupilGroup.add(iris);
+        // Right Eye Anchor & Mesh
+        this.rightEyeAnchor = new THREE.Group();
+        this.rightEyeMesh = new THREE.Mesh(eyeGeo, this.eyeMaterial);
+        this.rightEyeAnchor.add(this.rightEyeMesh);
 
-        // Glowing center core (Cursed pupil slit/ring)
-        const coreGeo = new THREE.SphereGeometry(0.12, 24, 24);
-        coreGeo.scale(0.85, 1.1, 0.4);
-        const coreMat = new THREE.MeshBasicMaterial({
-            color: 0xffffff
-        });
-        const core = new THREE.Mesh(coreGeo, coreMat);
-        core.position.set(0, 0, 0.08);
-        pupilGroup.add(core);
+        // Initial positions on curved surface
+        const initialSpacing = 0.24;
+        const initialY = 0.05;
+        const initialZ = Math.sqrt(0.95 * 0.95 - initialSpacing * initialSpacing - initialY * initialY) + 0.016;
 
-        // Anime glint / specular reflection dot (Top right of pupil)
-        const glintGeo = new THREE.SphereGeometry(0.05, 16, 16);
-        const glintMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
-        const glint = new THREE.Mesh(glintGeo, glintMat);
-        glint.position.set(0.08, 0.08, 0.15);
-        pupilGroup.add(glint);
+        this.leftEyeAnchor.position.set(-initialSpacing, initialY, initialZ);
+        this.rightEyeAnchor.position.set(initialSpacing, initialY, initialZ);
 
-        eyeAnchor.add(pupilGroup);
-        if (isLeft) this.leftPupil = pupilGroup;
-        else this.rightPupil = pupilGroup;
-
-        // 3. Dynamic Eyelids (Slant and close as creature gets angry!)
-        // Upper Eyelid (Curved protective hood that tilts to form angry V-shape)
-        const eyelidGeo = new THREE.SphereGeometry(0.42, 32, 16, 0, Math.PI * 2, 0, Math.PI * 0.52);
-        const eyelidMat = new THREE.MeshPhysicalMaterial({
-            color: this.colorPink,
-            roughness: 0.22,
-            metalness: 0.1,
-            clearcoat: 0.9,
-            emissive: this.colorHotPink,
-            emissiveIntensity: 0.25
-        });
-
-        const upperLid = new THREE.Mesh(eyelidGeo, eyelidMat);
-        upperLid.position.set(0, 0.05, 0.02);
-        upperLid.rotation.x = -Math.PI * 0.46; // Wide open and innocent at rest
-        eyeAnchor.add(upperLid);
-
-        // Lower Eyelid (Subtly raises to squint during rage)
-        const lowerLid = new THREE.Mesh(eyelidGeo, eyelidMat);
-        lowerLid.position.set(0, -0.05, 0.02);
-        lowerLid.rotation.x = Math.PI * 0.46; // Wide open downwards at rest
-        lowerLid.rotation.z = Math.PI;
-        eyeAnchor.add(lowerLid);
-
-        if (isLeft) {
-            this.leftEyelidUpper = upperLid;
-            this.leftEyelidLower = lowerLid;
-            this.leftEyelidMat = eyelidMat;
-        } else {
-            this.rightEyelidUpper = upperLid;
-            this.rightEyelidLower = lowerLid;
-            this.rightEyelidMat = eyelidMat;
-        }
-
-        return eyeAnchor;
+        this.creatureGroup.add(this.leftEyeAnchor);
+        this.creatureGroup.add(this.rightEyeAnchor);
     }
 
     createAuraParticles() {
-        const particleCount = 75;
+        const particleCount = 60;
         const positions = new Float32Array(particleCount * 3);
         const colors = new Float32Array(particleCount * 3);
-
         const tempColor = new THREE.Color();
 
         for (let i = 0; i < particleCount; i++) {
-            // Orbital distribution around the sphere
             const u = Math.random();
             const v = Math.random();
             const theta = u * 2.0 * Math.PI;
             const phi = Math.acos(2.0 * v - 1.0);
-            const r = 2.0 + Math.random() * 1.2;
+            const r = 1.25 + Math.random() * 0.70; // Proportionate orbit around 0.95 orb
 
             positions[i * 3] = r * Math.sin(phi) * Math.cos(theta);
             positions[i * 3 + 1] = r * Math.sin(phi) * Math.sin(theta);
             positions[i * 3 + 2] = r * Math.cos(phi);
 
-            // Sakura Pink to Radiant Ruby
             tempColor.setHSL(0.95 + Math.random() * 0.08, 0.9, 0.65);
             colors[i * 3] = tempColor.r;
             colors[i * 3 + 1] = tempColor.g;
@@ -300,7 +233,7 @@ class Gatekeeper3D {
         const spriteTexture = new THREE.CanvasTexture(spriteCanvas);
 
         const auraMat = new THREE.PointsMaterial({
-            size: 0.22,
+            size: 0.15,
             vertexColors: true,
             map: spriteTexture,
             transparent: true,
@@ -315,8 +248,8 @@ class Gatekeeper3D {
 
     createShardPool() {
         // Pool of 3D faceted shards that blast outward upon click explosion
-        const shardCount = 140;
-        const shardGeo = new THREE.TetrahedronGeometry(0.18, 0);
+        const shardCount = 120;
+        const shardGeo = new THREE.TetrahedronGeometry(0.11, 0);
 
         this.shardGroup = new THREE.Group();
         this.scene.add(this.shardGroup);
@@ -335,7 +268,7 @@ class Gatekeeper3D {
             shard.userData = {
                 velocity: new THREE.Vector3(),
                 rotVelocity: new THREE.Vector3(),
-                scale: 0.6 + Math.random() * 0.8
+                scale: 0.6 + Math.random() * 0.7
             };
             this.shardGroup.add(shard);
             this.shardMeshes.push(shard);
@@ -383,22 +316,22 @@ class Gatekeeper3D {
             const centerX = window.innerWidth / 2;
             const centerY = window.innerHeight / 2;
             const dist = Math.hypot(e.clientX - centerX, e.clientY - centerY);
-            const orbScreenRadius = Math.min(window.innerWidth, window.innerHeight) * 0.26;
+            const orbScreenRadius = Math.min(window.innerWidth, window.innerHeight) * 0.17;
 
             // Direct strike on the creature or agitated detonation
             if (dist <= orbScreenRadius || this.anger > 0.35) {
                 this.triggerExplosion();
             } else {
-                // If clicked far away, creature gets agitated and jags towards cursor!
-                this.targetAnger = Math.min(1.0, this.targetAnger + 0.35);
-                this.anger = Math.min(1.0, this.anger + 0.3);
+                // If clicked far away, creature gets agitated and pulses towards cursor
+                this.targetAnger = Math.min(1.0, this.targetAnger + 0.30);
+                this.anger = Math.min(1.0, this.anger + 0.25);
                 if (this.creatureGroup) {
-                    this.creatureGroup.scale.set(1.12, 0.88, 1.12);
+                    this.creatureGroup.scale.set(1.08, 0.92, 1.08);
                     setTimeout(() => {
                         if (this.creatureGroup && !this.isExploding) {
                             this.creatureGroup.scale.set(1, 1, 1);
                         }
-                    }, 160);
+                    }, 150);
                 }
             }
         });
@@ -422,11 +355,11 @@ class Gatekeeper3D {
         const dy = this.screenMouse.y - centerY;
         const dist = Math.hypot(dx, dy);
 
-        // Radius of activation (around 420px on desktop)
-        const maxDist = Math.min(window.innerWidth, window.innerHeight) * 0.45;
+        // Radius of activation (around 380px on desktop)
+        const maxDist = Math.min(window.innerWidth, window.innerHeight) * 0.42;
         this.targetAnger = Math.max(0, Math.min(1, 1 - (dist / maxDist)));
 
-        // Smooth Lerp for organic breathing response
+        // Smooth Lerp for organic emotional response
         this.anger += (this.targetAnger - this.anger) * 0.085;
 
         // Update Mouse Lerp
@@ -446,81 +379,115 @@ class Gatekeeper3D {
         if (this.orbMaterial) {
             this.orbMaterial.color.copy(currentColor);
             this.orbMaterial.emissive.copy(currentEmissive);
-            this.orbMaterial.emissiveIntensity = 0.25 + anger * 0.95;
+            this.orbMaterial.emissiveIntensity = 0.22 + anger * 1.1;
         }
 
-        if (this.leftEyelidMat && this.rightEyelidMat) {
-            this.leftEyelidMat.color.copy(currentColor);
-            this.leftEyelidMat.emissive.copy(currentEmissive);
-            this.rightEyelidMat.color.copy(currentColor);
-            this.rightEyelidMat.emissive.copy(currentEmissive);
+        // Eye Color Transformation: Sleek Dark Obsidian -> Blazing Laser Red Rage
+        if (this.eyeMaterial) {
+            this.eyeMaterial.color.lerpColors(this.eyeCalmColor, this.eyeAngryColor, anger);
+            this.eyeMaterial.emissive.lerpColors(this.eyeCalmEmissive, this.eyeAngryEmissive, anger);
+            this.eyeMaterial.emissiveIntensity = 0.35 + anger * 3.6;
         }
 
         // Lighting intensity increases with fury
         if (this.keyLight) {
             this.keyLight.color.copy(currentColor);
-            this.keyLight.intensity = 5.5 + anger * 10.0;
+            this.keyLight.intensity = 5.0 + anger * 8.5;
         }
 
-        // 2. Head Tilt & Gaze Tracking towards mouse
+        // 2. Creature Idle Breathing, Perspective Gaze & SUBTLE TENSION (No crazy vibration)
         if (this.creatureGroup) {
-            const idleBob = Math.sin(elapsedTime * 2.2) * 0.12;
+            const idleBob = Math.sin(elapsedTime * 2.0) * 0.07;
 
-            // When anger rises, creature trembles furiously (rage jitter)
-            let jitterX = 0;
-            let jitterY = 0;
-            if (anger > 0.22) {
-                const jitterAmp = Math.pow(anger, 2.2) * 0.14;
-                jitterX = (Math.random() - 0.5) * jitterAmp;
-                jitterY = (Math.random() - 0.5) * jitterAmp;
+            // Tight, subtle tension hum when angry (drastically reduced from previous violent shake)
+            let tensionX = 0;
+            let tensionY = 0;
+            if (anger > 0.12) {
+                const tensionFreq = 28.0;
+                const tensionAmp = anger * 0.009; // Max 0.009 units (~1-2 screen pixels)
+                tensionX = Math.sin(elapsedTime * tensionFreq) * tensionAmp;
+                tensionY = Math.cos(elapsedTime * (tensionFreq * 1.12)) * (tensionAmp * 0.65);
             }
 
-            this.creatureGroup.position.x = jitterX;
-            this.creatureGroup.position.y = idleBob + jitterY;
+            this.creatureGroup.position.x = tensionX;
+            this.creatureGroup.position.y = idleBob + tensionY;
 
             // 3D Perspective Rotation towards mouse cursor
-            this.creatureGroup.rotation.y = this.mouse.x * 0.48;
-            this.creatureGroup.rotation.x = -this.mouse.y * 0.38;
+            this.creatureGroup.rotation.y = this.mouse.x * 0.35;
+            this.creatureGroup.rotation.x = -this.mouse.y * 0.26;
+
+            // Subtle tense clench when enraged
+            const clenchY = 1.0 - anger * 0.05;
+            const clenchXZ = 1.0 + anger * 0.025;
+            this.creatureGroup.scale.set(clenchXZ, clenchY, clenchXZ);
         }
 
-        // 3. Eye Pupil Tracking within eye sockets
-        const pupilX = this.mouse.x * 0.13;
-        const pupilY = this.mouse.y * 0.11;
-
-        if (this.leftPupil && this.rightPupil) {
-            this.leftPupil.position.x = pupilX;
-            this.leftPupil.position.y = pupilY;
-            this.rightPupil.position.x = pupilX;
-            this.rightPupil.position.y = pupilY;
+        // 3. COMICAL "AADHI CLOSED" (HALF-CLOSED) EYE TRACKING & BLINK
+        // Periodic cute cartoon blink every 3.8s
+        const blinkCycle = elapsedTime % 3.8;
+        let blinkFactor = 1.0;
+        if (blinkCycle > 3.62 && anger < 0.65) {
+            const phase = (blinkCycle - 3.62) / 0.18;
+            blinkFactor = Math.abs(Math.sin(phase * Math.PI - Math.PI / 2)) * 0.85 + 0.15;
         }
 
-        // 4. Expression Morphing (Cute Round Eyes -> Angry Slanted Demonic V-Shape Glare)
-        if (this.leftEyelidUpper && this.rightEyelidUpper) {
-            // Upper eyelids rotate downwards over eye
-            const upperLidRotationX = THREE.MathUtils.lerp(-Math.PI * 0.46, -Math.PI * 0.12, anger);
-            this.leftEyelidUpper.rotation.x = upperLidRotationX;
-            this.rightEyelidUpper.rotation.x = upperLidRotationX;
+        // Funny side-eye squint: tracking horizontally squishes eyes into funny half-closed look
+        const horizGaze = Math.abs(this.mouse.x);
+        const calmHalfClosedY = THREE.MathUtils.lerp(0.60, 0.44, horizGaze) * blinkFactor;
+        const calmSquashX = THREE.MathUtils.lerp(1.0, 1.15, horizGaze);
+        const funnySideEyeTilt = this.mouse.x * 0.14; // Comical tilt in direction of gaze
 
-            // Tilt inward at an aggressive V-angle!
-            const tiltAngle = anger * 0.45; // ~26 degrees inwards
-            this.leftEyelidUpper.rotation.z = tiltAngle;
-            this.rightEyelidUpper.rotation.z = -tiltAngle;
+        // 4. FURIOUS ANGER MORPHING (\  / INWARD V-SLANT & SHARP GLOWING SLIT)
+        // Slit narrowing in furious anger
+        const currentScaleY = THREE.MathUtils.lerp(calmHalfClosedY, 0.32, anger);
+        const currentScaleX = THREE.MathUtils.lerp(calmSquashX, 1.30, anger);
 
-            // Lower eyelids raise slightly (squinting focus)
-            const lowerLidRotationX = THREE.MathUtils.lerp(Math.PI * 0.46, Math.PI * 0.28, anger);
-            this.leftEyelidLower.rotation.x = lowerLidRotationX;
-            this.rightEyelidLower.rotation.x = lowerLidRotationX;
-            this.leftEyelidLower.rotation.z = Math.PI - (tiltAngle * 0.5);
-            this.rightEyelidLower.rotation.z = Math.PI + (tiltAngle * 0.5);
+        // Inward furious V-shape slant: \  /
+        const angrySlantLeft = +0.58;   // +33.2 deg inward (\)
+        const angrySlantRight = -0.58;  // -33.2 deg inward (/)
+
+        const currentRotZLeft = THREE.MathUtils.lerp(funnySideEyeTilt, angrySlantLeft, anger);
+        const currentRotZRight = THREE.MathUtils.lerp(funnySideEyeTilt, angrySlantRight, anger);
+
+        if (this.leftEyeMesh && this.rightEyeMesh) {
+            this.leftEyeMesh.scale.set(currentScaleX, currentScaleY, 1.0);
+            this.rightEyeMesh.scale.set(currentScaleX, currentScaleY, 1.0);
+
+            this.leftEyeMesh.rotation.z = currentRotZLeft;
+            this.rightEyeMesh.rotation.z = currentRotZRight;
         }
 
-        // 5. Orbiting Aura Particles acceleration
+        // 5. PROJECT EYE POSITION ONTO SPHERICAL SURFACE (R = 0.95)
+        // Spacing narrows slightly when brow furrows in anger
+        const baseSpacing = THREE.MathUtils.lerp(0.24, 0.185, anger);
+        const browDip = anger * 0.035;
+
+        const leftX = -baseSpacing + this.mouse.x * (0.09 * (1 - anger * 0.45));
+        const rightX = baseSpacing + this.mouse.x * (0.09 * (1 - anger * 0.45));
+        const eyeY = 0.05 + this.mouse.y * (0.07 * (1 - anger * 0.4)) - browDip;
+
+        const R = 0.95;
+        const leftZ = Math.sqrt(Math.max(0.05, R * R - leftX * leftX - eyeY * eyeY)) + 0.016;
+        const rightZ = Math.sqrt(Math.max(0.05, R * R - rightX * rightX - eyeY * eyeY)) + 0.016;
+
+        if (this.leftEyeAnchor && this.rightEyeAnchor) {
+            this.leftEyeAnchor.position.set(leftX, eyeY, leftZ);
+            this.rightEyeAnchor.position.set(rightX, eyeY, rightZ);
+
+            // Align with surface normal on sphere
+            this.leftEyeAnchor.rotation.y = -leftX * 0.65;
+            this.leftEyeAnchor.rotation.x = eyeY * 0.65;
+            this.rightEyeAnchor.rotation.y = -rightX * 0.65;
+            this.rightEyeAnchor.rotation.x = eyeY * 0.65;
+        }
+
+        // 6. Orbiting Aura Particles acceleration
         if (this.auraParticles) {
-            this.auraParticles.rotation.y += 0.008 + anger * 0.04;
-            this.auraParticles.rotation.x += 0.004 + anger * 0.02;
+            this.auraParticles.rotation.y += 0.008 + anger * 0.035;
+            this.auraParticles.rotation.x += 0.004 + anger * 0.018;
         }
 
-        // 6. DOM HUD Feedback
+        // 7. DOM HUD Feedback
         if (this.threatFill) {
             this.threatFill.style.width = `${Math.min(100, Math.round(anger * 100))}%`;
         }
@@ -542,12 +509,12 @@ class Gatekeeper3D {
             const glowR = Math.round(255);
             const glowG = Math.round(77 * (1 - anger));
             const glowB = Math.round(148 * (1 - anger) + 60 * anger);
-            const glowAlpha = 0.25 + anger * 0.4;
+            const glowAlpha = 0.24 + anger * 0.38;
             this.ambientGlow.style.background = `radial-gradient(circle, rgba(${glowR}, ${glowG}, ${glowB}, ${glowAlpha}) 0%, rgba(255, 0, 60, ${glowAlpha * 0.5}) 45%, transparent 70%)`;
-            this.ambientGlow.style.transform = `translate(-50%, -50%) scale(${1 + anger * 0.35})`;
+            this.ambientGlow.style.transform = `translate(-50%, -50%) scale(${1 + anger * 0.28})`;
         }
 
-        // 7. Sync Custom Blood Cursor Trail with rage
+        // 8. Sync Custom Blood Cursor Trail with rage
         const cursorTrail = document.getElementById('cursorTrail');
         if (cursorTrail && !this.isDisposed) {
             if (anger > 0.45) {
@@ -620,23 +587,22 @@ class Gatekeeper3D {
 
         // 1. Implosion & Visual Blast Preparation
         if (this.orbMesh) this.orbMesh.visible = false;
-        if (this.leftEyeGroup) this.leftEyeGroup.visible = false;
-        if (this.rightEyeGroup) this.rightEyeGroup.visible = false;
+        if (this.leftEyeAnchor) this.leftEyeAnchor.visible = false;
+        if (this.rightEyeAnchor) this.rightEyeAnchor.visible = false;
         if (this.auraParticles) this.auraParticles.visible = false;
 
         // Activate 3D Shards
-        const origin = new THREE.Vector3(0, 0, 0);
         this.shardMeshes.forEach(shard => {
             shard.visible = true;
-            // Spawn around sphere surface
+            // Spawn around sphere surface of radius 0.95
             const dir = new THREE.Vector3(
                 (Math.random() - 0.5) * 2,
                 (Math.random() - 0.5) * 2,
                 (Math.random() - 0.5) * 2
             ).normalize();
 
-            shard.position.copy(dir.clone().multiplyScalar(1.65));
-            shard.userData.velocity.copy(dir.multiplyScalar(9.0 + Math.random() * 16.0));
+            shard.position.copy(dir.clone().multiplyScalar(0.95));
+            shard.userData.velocity.copy(dir.multiplyScalar(8.0 + Math.random() * 15.0));
             shard.userData.rotVelocity.set(
                 (Math.random() - 0.5) * 12.0,
                 (Math.random() - 0.5) * 12.0,

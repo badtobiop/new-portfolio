@@ -146,11 +146,11 @@ body {
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    width: 580px;
-    height: 580px;
+    width: 360px;
+    height: 360px;
     border-radius: 50%;
-    background: radial-gradient(circle, rgba(255, 77, 148, 0.32) 0%, rgba(255, 0, 60, 0.15) 45%, transparent 70%);
-    filter: blur(45px);
+    background: radial-gradient(circle, rgba(255, 77, 148, 0.3) 0%, rgba(255, 0, 60, 0.12) 45%, transparent 70%);
+    filter: blur(35px);
     pointer-events: none;
     z-index: 1;
     transition: background 0.3s ease, transform 0.3s ease;
@@ -184,7 +184,6 @@ body {
     border-radius: 50%;
     background: #ff4d94;
     box-shadow: 0 0 10px #ff4d94, 0 0 20px #ff4d94;
-    animation: beaconPulse 1.8s infinite;
 }
 
 /* Dynamic Threat HUD below Creature */
@@ -213,8 +212,7 @@ body {
 
 .gatekeeper-instruction.angry {
     color: #ff003c;
-    text-shadow: 0 0 16px rgba(255, 0, 60, 0.85);
-    animation: angryShake 0.12s infinite;
+    text-shadow: 0 0 18px rgba(255, 0, 60, 0.95);
 }
 
 .gatekeeper-threat-meter {
