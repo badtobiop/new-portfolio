@@ -52,7 +52,7 @@ class GatekeeperWithCompanion {
 
         // Flight Animation State (Lands at bottom 48px, right 38px)
         this.flightStart = { x: 0, y: 0, r: 56 };
-        this.flightTarget = { x: window.innerWidth - 38 - 40, y: window.innerHeight - 48 - 40, r: 37 };
+        this.flightTarget = { x: window.innerWidth - 38 - 36, y: window.innerHeight - 48 - 36, r: 33 };
         this.flightDuration = 0.78;
         this.flightElapsed = 0;
 
@@ -86,7 +86,22 @@ class GatekeeperWithCompanion {
             "My makeup is pure CSS and my attitude is 100% JavaScript, baby! 💄💅",
             "Star his GitHub repo right now, or Sushi is putting you on her blacklist! ⭐😤",
             "If your jaw hasn't dropped yet, you clearly haven't checked his Work section! 🚀👀",
-            "You made it all the way down here? Wow, download his resume already! 📄🎉"
+            "You made it all the way down here? Wow, download his resume already! 📄🎉",
+            "Utkarsh told me to be humble today... so anyway, he's the best dev ever! 💅🌍",
+            "Behind every 60 FPS animation is Utkarsh crying into a coffee mug! ☕😭✨",
+            "Sushi reviewed your team... and honestly, you desperately need Utkarsh! 💅💼",
+            "He didn't just write code, he orchestrated visual art. Applaud, sweetie! 👏👑",
+            "Other devs use templates, Utkarsh crafts custom digital universes! 🌌🛠️",
+            "Still hesitating? Honey, recruiters are already sliding into his inbox! 🏃‍♀️💨",
+            "I'm cute, I'm pink, and I run on 120 FPS WebGL glory. Worship my creator! 🍣💅💖",
+            "Fun fact: Utkarsh drinks coffee to give JavaScript a fighting chance! ☕⚡",
+            "Those shader glints? You can literally see your future hiring him in them! 🔮✨",
+            "Sushi doesn't give 5 stars easily, but Utkarsh's clean code gets ten! ⭐🍣",
+            "If aesthetic UI design was illegal, Utkarsh would be serving life! 🚨💅",
+            "Click his social links below! Don't be shy, he's surprisingly sweet! 🤝💫",
+            "Warning: Prolonged browsing may trigger unstoppable urges to send job offers! 💸😉",
+            "Sushi is watching you... scroll down and inspect those project demos! 👀🎯",
+            "Every single pixel here was placed with love, caffeine, and pure passion! 💖🚀"
         ];
 
         this.angryLines = [
@@ -168,28 +183,28 @@ class GatekeeperWithCompanion {
             this.circlePos.y = window.innerHeight / 2;
         }
 
-        // Update flight target to match bottom 48px, right 38px (80px circle)
+        // Update flight target to match bottom 48px, right 38px (72px circle)
         this.flightTarget = {
-            x: window.innerWidth - 38 - 40,
-            y: window.innerHeight - 48 - 40,
-            r: 37
+            x: window.innerWidth - 38 - 36,
+            y: window.innerHeight - 48 - 36,
+            r: 33
         };
     };
 
     setupCompanionCanvas() {
         if (!this.companionCanvas || !this.companionCtx) return;
         const dpr = Math.min(window.devicePixelRatio || 1, 2.0);
-        this.companionCanvas.width = 80 * dpr;
-        this.companionCanvas.height = 80 * dpr;
-        this.companionCanvas.style.width = '80px';
-        this.companionCanvas.style.height = '80px';
+        this.companionCanvas.width = 72 * dpr;
+        this.companionCanvas.height = 72 * dpr;
+        this.companionCanvas.style.width = '72px';
+        this.companionCanvas.style.height = '72px';
         this.companionCtx.scale(dpr, dpr);
     }
 
     getHomePos() {
         return {
-            x: window.innerWidth - 38 - 80,
-            y: window.innerHeight - 48 - 80
+            x: window.innerWidth - 38 - 72,
+            y: window.innerHeight - 48 - 72
         };
     }
 
@@ -225,8 +240,8 @@ class GatekeeperWithCompanion {
                 if (Math.hypot(newX - this.dragStartX, newY - this.dragStartY) > 6) {
                     this.hasDragged = true;
                 }
-                const clampedX = Math.max(10, Math.min(window.innerWidth - 90, newX));
-                const clampedY = Math.max(60, Math.min(window.innerHeight - 90, newY));
+                const clampedX = Math.max(10, Math.min(window.innerWidth - 82, newX));
+                const clampedY = Math.max(60, Math.min(window.innerHeight - 82, newY));
                 this.companion.style.left = `${clampedX}px`;
                 this.companion.style.top = `${clampedY}px`;
                 this.companion.style.bottom = 'auto';
@@ -254,8 +269,8 @@ class GatekeeperWithCompanion {
                     if (Math.hypot(newX - this.dragStartX, newY - this.dragStartY) > 6) {
                         this.hasDragged = true;
                     }
-                    const clampedX = Math.max(10, Math.min(window.innerWidth - 90, newX));
-                    const clampedY = Math.max(60, Math.min(window.innerHeight - 90, newY));
+                    const clampedX = Math.max(10, Math.min(window.innerWidth - 82, newX));
+                    const clampedY = Math.max(60, Math.min(window.innerHeight - 82, newY));
                     this.companion.style.left = `${clampedX}px`;
                     this.companion.style.top = `${clampedY}px`;
                     this.companion.style.bottom = 'auto';
@@ -513,11 +528,11 @@ class GatekeeperWithCompanion {
             r: this.circleRadius
         };
 
-        // Target position in bottom-right corner (bottom 48px, right 38px, 80px circle)
+        // Target position in bottom-right corner (bottom 48px, right 38px, 72px circle)
         this.flightTarget = {
-            x: window.innerWidth - 38 - 40,
-            y: window.innerHeight - 48 - 40,
-            r: 37
+            x: window.innerWidth - 38 - 36,
+            y: window.innerHeight - 48 - 36,
+            r: 33
         };
 
         // Unlock page scroll & animate Hero section elements
@@ -703,11 +718,11 @@ class GatekeeperWithCompanion {
     drawCompanion(elapsedTime, delta) {
         if (!this.companionCtx) return;
         const ctx = this.companionCtx;
-        const w = 80;
-        const h = 80;
-        const cx = 40;
-        const cy = 40;
-        const r = 37;
+        const w = 72;
+        const h = 72;
+        const cx = 36;
+        const cy = 36;
+        const r = 33;
 
         ctx.clearRect(0, 0, w, h);
 
@@ -743,7 +758,7 @@ class GatekeeperWithCompanion {
         ctx.restore();
 
         // Dynamic gaze tracking towards mouse (syncs eyes & mouth)
-        const scale = 37 / 56;
+        const scale = 33 / 56;
         const gazeX = this.mouse.x;
         const gazeY = -this.mouse.y;
 

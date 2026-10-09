@@ -219,15 +219,15 @@ body {
     transform: translateY(40px);
 }
 
-/* 2D Canvas for Mascot Head - Permanently Fixed 80px (Never scales or resizes) */
+/* 2D Canvas for Mascot Head - Permanently Fixed 72px (Never scales or resizes) */
 .mascot-canvas {
-    width: 80px !important;
-    height: 80px !important;
-    min-width: 80px !important;
-    min-height: 80px !important;
-    max-width: 80px !important;
-    max-height: 80px !important;
-    filter: drop-shadow(0 5px 16px rgba(255, 77, 148, 0.45));
+    width: 72px !important;
+    height: 72px !important;
+    min-width: 72px !important;
+    min-height: 72px !important;
+    max-width: 72px !important;
+    max-height: 72px !important;
+    filter: drop-shadow(0 5px 15px rgba(255, 77, 148, 0.45));
     transition: filter 0.3s ease;
     transform: none !important;
     scale: 1 !important;
