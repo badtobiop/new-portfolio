@@ -318,8 +318,8 @@ body {
 
 /* 2D Canvas for Mascot Head */
 .mascot-canvas {
-    width: 76px;
-    height: 76px;
+    width: 96px;
+    height: 96px;
     filter: drop-shadow(0 6px 20px rgba(255, 77, 148, 0.45));
     transition: filter 0.3s ease;
 }

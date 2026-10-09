@@ -4,7 +4,6 @@
 
 document.addEventListener('DOMContentLoaded', () => {
     initBloodCursor();
-    initDomainAudio();
     initNavigationHighlighter();
     initCardParallax();
     initSummonForm();

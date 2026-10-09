@@ -94,9 +94,6 @@ class GatekeeperWithCompanion {
         this.lastTime = performance.now();
         this.elapsedTime = 0;
 
-        // Audio
-        this.audioCtx = null;
-
         this.init();
     }
 
@@ -141,10 +138,10 @@ class GatekeeperWithCompanion {
     setupCompanionCanvas() {
         if (!this.companionCanvas || !this.companionCtx) return;
         const dpr = Math.min(window.devicePixelRatio || 1, 2.0);
-        this.companionCanvas.width = 76 * dpr;
-        this.companionCanvas.height = 76 * dpr;
-        this.companionCanvas.style.width = '76px';
-        this.companionCanvas.style.height = '76px';
+        this.companionCanvas.width = 96 * dpr;
+        this.companionCanvas.height = 96 * dpr;
+        this.companionCanvas.style.width = '96px';
+        this.companionCanvas.style.height = '96px';
         this.companionCtx.scale(dpr, dpr);
     }
 
@@ -239,32 +236,6 @@ class GatekeeperWithCompanion {
         }
     }
 
-    playWarpSound() {
-        try {
-            const AudioContext = window.AudioContext || window.webkitAudioContext;
-            if (!AudioContext) return;
-            if (!this.audioCtx) this.audioCtx = new AudioContext();
-            if (this.audioCtx.state === 'suspended') this.audioCtx.resume();
-
-            const now = this.audioCtx.currentTime;
-
-            // Soft joyful anime whoosh chime
-            const osc = this.audioCtx.createOscillator();
-            const gain = this.audioCtx.createGain();
-            osc.type = 'sine';
-            osc.frequency.setValueAtTime(440, now);
-            osc.frequency.exponentialRampToValueAtTime(880, now + 0.35);
-
-            gain.gain.setValueAtTime(0.4, now);
-            gain.gain.exponentialRampToValueAtTime(0.001, now + 0.4);
-
-            osc.connect(gain);
-            gain.connect(this.audioCtx.destination);
-            osc.start(now);
-            osc.stop(now + 0.45);
-        } catch (e) {}
-    }
-
     // ==========================================================================
     // SMOOTH FLIGHT ANIMATION TO CORNER (NO BLAST!)
     // ==========================================================================
@@ -273,8 +244,6 @@ class GatekeeperWithCompanion {
         this.isTransitioning = true;
         this.flightElapsed = 0;
 
-        this.playWarpSound();
-
         // Start position
         this.flightStart = {
             x: this.circlePos.x,
@@ -282,11 +251,11 @@ class GatekeeperWithCompanion {
             r: this.circleRadius
         };
 
-        // Target position in bottom-right corner
+        // Target position in bottom-right corner (larger, clearly visible)
         this.flightTarget = {
-            x: window.innerWidth - 66,
-            y: window.innerHeight - 62,
-            r: 34
+            x: window.innerWidth - 76,
+            y: window.innerHeight - 72,
+            r: 44
         };
 
         // Fade HUD elements immediately
@@ -489,11 +458,11 @@ class GatekeeperWithCompanion {
     drawCompanion(elapsedTime, delta) {
         if (!this.companionCtx) return;
         const ctx = this.companionCtx;
-        const w = 76;
-        const h = 76;
-        const cx = 38;
-        const cy = 38;
-        const r = 32;
+        const w = 96;
+        const h = 96;
+        const cx = 48;
+        const cy = 48;
+        const r = 44;
 
         ctx.clearRect(0, 0, w, h);
 
@@ -501,7 +470,7 @@ class GatekeeperWithCompanion {
         const isAngry = this.isHoveredAngry;
 
         // Circle Gradient (Pink vs Blood Red)
-        const grad = ctx.createRadialGradient(cx - r * 0.2, cy - r * 0.25, 3, cx, cy, r);
+        const grad = ctx.createRadialGradient(cx - r * 0.2, cy - r * 0.25, 4, cx, cy, r);
         if (isAngry) {
             grad.addColorStop(0, '#ff1a40');
             grad.addColorStop(0.75, '#d60029');
@@ -528,8 +497,8 @@ class GatekeeperWithCompanion {
         ctx.fill();
         ctx.restore();
 
-        // Eye Tracking towards mouse
-        const scale = 32 / 56;
+        // Eye Tracking towards mouse (scaled to r=44)
+        const scale = 44 / 56;
         this.drawEyes(ctx, cx, cy, scale, isAngry ? 1.0 : 0, 0, elapsedTime, true);
 
         // ==============================================================
@@ -537,12 +506,12 @@ class GatekeeperWithCompanion {
         // ==============================================================
         if (isAngry) {
             // Angry Grimace / Clamped Frown
-            ctx.lineWidth = 2.4;
+            ctx.lineWidth = 2.8;
             ctx.lineCap = 'round';
             ctx.strokeStyle = '#080005';
             ctx.beginPath();
-            ctx.moveTo(cx - 5, cy + 9);
-            ctx.lineTo(cx + 5, cy + 9);
+            ctx.moveTo(cx - 7, cy + 12);
+            ctx.lineTo(cx + 7, cy + 12);
             ctx.stroke();
         } else if (this.isTalking) {
             // Talking mouth flaps open and close while delivering joke
@@ -551,24 +520,24 @@ class GatekeeperWithCompanion {
                 // Open talking oval
                 ctx.fillStyle = '#080005';
                 ctx.beginPath();
-                ctx.ellipse(cx, cy + 8, 4.2, 2.0 + mouthFlap * 3.8, 0, 0, Math.PI * 2);
+                ctx.ellipse(cx, cy + 11, 5.2, 2.4 + mouthFlap * 4.2, 0, 0, Math.PI * 2);
                 ctx.fill();
             } else {
                 // Closed smile curve
-                ctx.lineWidth = 2.2;
+                ctx.lineWidth = 2.6;
                 ctx.lineCap = 'round';
                 ctx.strokeStyle = '#080005';
                 ctx.beginPath();
-                ctx.arc(cx, cy + 7, 3.8, 0.2, Math.PI - 0.2, false);
+                ctx.arc(cx, cy + 10, 4.8, 0.2, Math.PI - 0.2, false);
                 ctx.stroke();
             }
         } else {
             // Relaxed cute smile curve when silent
-            ctx.lineWidth = 2.2;
+            ctx.lineWidth = 2.6;
             ctx.lineCap = 'round';
             ctx.strokeStyle = '#080005';
             ctx.beginPath();
-            ctx.arc(cx, cy + 7, 4.0, 0.2, Math.PI - 0.2, false);
+            ctx.arc(cx, cy + 10, 5.0, 0.2, Math.PI - 0.2, false);
             ctx.stroke();
         }
     }
