@@ -52,7 +52,7 @@ class GatekeeperWithCompanion {
 
         // Flight Animation State (Lands at bottom 48px, right 38px)
         this.flightStart = { x: 0, y: 0, r: 56 };
-        this.flightTarget = { x: window.innerWidth - 38 - 44, y: window.innerHeight - 48 - 44, r: 40 };
+        this.flightTarget = { x: window.innerWidth - 38 - 40, y: window.innerHeight - 48 - 40, r: 37 };
         this.flightDuration = 0.78;
         this.flightElapsed = 0;
 
@@ -168,28 +168,28 @@ class GatekeeperWithCompanion {
             this.circlePos.y = window.innerHeight / 2;
         }
 
-        // Update flight target to match bottom 48px, right 38px (88px circle)
+        // Update flight target to match bottom 48px, right 38px (80px circle)
         this.flightTarget = {
-            x: window.innerWidth - 38 - 44,
-            y: window.innerHeight - 48 - 44,
-            r: 40
+            x: window.innerWidth - 38 - 40,
+            y: window.innerHeight - 48 - 40,
+            r: 37
         };
     };
 
     setupCompanionCanvas() {
         if (!this.companionCanvas || !this.companionCtx) return;
         const dpr = Math.min(window.devicePixelRatio || 1, 2.0);
-        this.companionCanvas.width = 88 * dpr;
-        this.companionCanvas.height = 88 * dpr;
-        this.companionCanvas.style.width = '88px';
-        this.companionCanvas.style.height = '88px';
+        this.companionCanvas.width = 80 * dpr;
+        this.companionCanvas.height = 80 * dpr;
+        this.companionCanvas.style.width = '80px';
+        this.companionCanvas.style.height = '80px';
         this.companionCtx.scale(dpr, dpr);
     }
 
     getHomePos() {
         return {
-            x: window.innerWidth - 38 - 88,
-            y: window.innerHeight - 48 - 88
+            x: window.innerWidth - 38 - 80,
+            y: window.innerHeight - 48 - 80
         };
     }
 
@@ -225,8 +225,8 @@ class GatekeeperWithCompanion {
                 if (Math.hypot(newX - this.dragStartX, newY - this.dragStartY) > 6) {
                     this.hasDragged = true;
                 }
-                const clampedX = Math.max(10, Math.min(window.innerWidth - 98, newX));
-                const clampedY = Math.max(60, Math.min(window.innerHeight - 98, newY));
+                const clampedX = Math.max(10, Math.min(window.innerWidth - 90, newX));
+                const clampedY = Math.max(60, Math.min(window.innerHeight - 90, newY));
                 this.companion.style.left = `${clampedX}px`;
                 this.companion.style.top = `${clampedY}px`;
                 this.companion.style.bottom = 'auto';
@@ -254,8 +254,8 @@ class GatekeeperWithCompanion {
                     if (Math.hypot(newX - this.dragStartX, newY - this.dragStartY) > 6) {
                         this.hasDragged = true;
                     }
-                    const clampedX = Math.max(10, Math.min(window.innerWidth - 98, newX));
-                    const clampedY = Math.max(60, Math.min(window.innerHeight - 98, newY));
+                    const clampedX = Math.max(10, Math.min(window.innerWidth - 90, newX));
+                    const clampedY = Math.max(60, Math.min(window.innerHeight - 90, newY));
                     this.companion.style.left = `${clampedX}px`;
                     this.companion.style.top = `${clampedY}px`;
                     this.companion.style.bottom = 'auto';
@@ -412,11 +412,11 @@ class GatekeeperWithCompanion {
             this.bubble.classList.add('angry');
             this.bubble.classList.remove('sass');
 
-            // Pop scale bounce on bubble
+            // Gentle bubble arrival (strictly zero scale change)
             if (typeof gsap !== 'undefined') {
                 gsap.fromTo(this.bubble,
-                    { scale: 0.65, opacity: 0 },
-                    { scale: 1.0, opacity: 1.0, duration: 0.35, ease: 'back.out(2)', clearProps: 'transform' }
+                    { opacity: 0 },
+                    { opacity: 1.0, duration: 0.25, ease: 'power2.out', clearProps: 'transform' }
                 );
             }
         }
@@ -455,19 +455,12 @@ class GatekeeperWithCompanion {
             this.bubble.classList.remove('bubble-hidden', 'sass');
             this.bubble.classList.add('angry');
 
-            // Quick indignant pop bounce
+            // Indignant response (strictly zero scale change)
             if (typeof gsap !== 'undefined') {
                 gsap.fromTo(this.bubble,
-                    { scale: 0.82, opacity: 0.7 },
-                    { scale: 1.0, opacity: 1.0, duration: 0.28, ease: 'back.out(2)', clearProps: 'transform' }
+                    { opacity: 0.4 },
+                    { opacity: 1.0, duration: 0.2, ease: 'power2.out', clearProps: 'transform' }
                 );
-                // Indignant head shudder / shake
-                if (this.companionCanvas) {
-                    gsap.fromTo(this.companionCanvas,
-                        { x: -5, rotation: -8 },
-                        { x: 0, rotation: 0, duration: 0.35, ease: 'elastic.out(1.2, 0.35)', clearProps: 'all' }
-                    );
-                }
             }
         }
 
@@ -502,11 +495,11 @@ class GatekeeperWithCompanion {
             r: this.circleRadius
         };
 
-        // Target position in bottom-right corner (bottom 48px, right 38px, 88px circle)
+        // Target position in bottom-right corner (bottom 48px, right 38px, 80px circle)
         this.flightTarget = {
-            x: window.innerWidth - 38 - 44,
-            y: window.innerHeight - 48 - 44,
-            r: 40
+            x: window.innerWidth - 38 - 40,
+            y: window.innerHeight - 48 - 40,
+            r: 37
         };
 
         // Unlock page scroll & animate Hero section elements
@@ -536,13 +529,14 @@ class GatekeeperWithCompanion {
         if (this.companion) {
             this.companion.classList.remove('hidden');
             this.resetToHomeCSS();
-            // Little landing bounce
+            // Gentle landing arrival (strictly zero scale change)
             if (typeof gsap !== 'undefined') {
                 gsap.from(this.companion, {
-                    scale: 0.5,
-                    y: 30,
-                    duration: 0.5,
-                    ease: 'back.out(2)'
+                    opacity: 0,
+                    y: 15,
+                    duration: 0.35,
+                    ease: 'power2.out',
+                    clearProps: 'opacity,y,transform'
                 });
             }
         }
@@ -561,11 +555,11 @@ class GatekeeperWithCompanion {
         this.isTalking = true;
         this.talkTimer = this.talkDuration;
 
-        // Bubble pop scale bounce (clears transform on finish for razor-sharp text)
+        // Bubble text fade without scale changes
         if (typeof gsap !== 'undefined' && this.bubble) {
             gsap.fromTo(this.bubble,
-                { scale: 0.88, opacity: 0.6 },
-                { scale: 1.0, opacity: 1.0, duration: 0.3, ease: 'back.out(1.8)', clearProps: 'transform' }
+                { opacity: 0.4 },
+                { opacity: 1.0, duration: 0.22, ease: 'power2.out', clearProps: 'transform' }
             );
         }
     }
@@ -688,11 +682,11 @@ class GatekeeperWithCompanion {
     drawCompanion(elapsedTime, delta) {
         if (!this.companionCtx) return;
         const ctx = this.companionCtx;
-        const w = 88;
-        const h = 88;
-        const cx = 44;
-        const cy = 44;
-        const r = 40;
+        const w = 80;
+        const h = 80;
+        const cx = 40;
+        const cy = 40;
+        const r = 37;
 
         ctx.clearRect(0, 0, w, h);
 
@@ -728,7 +722,7 @@ class GatekeeperWithCompanion {
         ctx.restore();
 
         // Dynamic gaze tracking towards mouse (syncs eyes & mouth)
-        const scale = 40 / 56;
+        const scale = 37 / 56;
         const gazeX = this.mouse.x;
         const gazeY = -this.mouse.y;
 
