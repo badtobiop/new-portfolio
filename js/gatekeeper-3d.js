@@ -66,32 +66,32 @@ class GatekeeperWithCompanion {
         this.walkDuration = 1.9; // 1.9s struts back in full attitude
         this.walkElapsed = 0;
 
-        // Sassy Girl English Dialogues & Banter
+        // Sassy Girl English Dialogues & Banter (Sushi 🍣✨)
         this.jokes = [
-            "Don't just stare at my cute face, go scroll Utkarsh's projects! 💅✨",
+            "Hi! I'm Sushi! Don't just stare at my cute face, go scroll Utkarsh's projects! 🍣💅✨",
             "Did you see TradeMatrix AI? Utkarsh built that and honestly, he's a genius! 🤖📈",
-            "Excuse me, I only look this fabulous because Utkarsh coded me with perfection. 💁‍♀️💖",
-            "Are you going to hire him or should I keep judging your taste? 💅💼",
-            "His Three.js animations are giving pure main character energy, right? ✨🎬",
+            "Excuse me, Sushi only looks this fabulous because Utkarsh coded me with perfection! 💁‍♀️💖",
+            "Are you going to hire him or should Sushi keep judging your taste? 💅💼",
+            "His 3D visuals are giving pure main character energy, right? ✨🎬",
             "He literally survived on coffee and late nights to build this for you! ☕🔥",
-            "If you think you found a bug... no you didn't. It's a luxury feature, honey. 🤫💅",
-            "Hit that 'Send Message' button already! He doesn't bite, promise. 📩😉",
+            "If you think you found a bug... no you didn't. Sushi says it's a luxury feature! 🤫💅",
+            "Hit that 'Send Message' button already! Utkarsh doesn't bite, Sushi promises. 📩😉",
             "Keep scrolling, darling! The cinematic magic is right below! 👑✨",
-            "Star his GitHub repo right now, or I'm putting you on my blacklist! ⭐😤",
+            "Star his GitHub repo right now, or Sushi is putting you on her blacklist! ⭐😤",
             "You made it all the way down here? Wow, download his resume already! 📄🎉"
         ];
 
         this.angryLines = [
-            "Hey! Keep your cursor away from me! 😤💅",
-            "Did I give you permission to touch me? Ugh! 🙄💢",
-            "Excuse you?! Go look at the portfolio, not me! 😡",
-            "Personal space, sweetie! Ever heard of it?! 💅⚡"
+            "Hey! Keep your cursor away from Sushi! 😤💅",
+            "Did I give you permission to touch Sushi? Ugh! 🙄💢",
+            "Excuse you?! Go look at Utkarsh's work, not Sushi! 😡🍣",
+            "Personal space, sweetie! Sushi needs her breathing room! 💅⚡"
         ];
 
         this.dragSassLines = [
-            "Excuse me?! I don't listen to anyone except Utkarsh! 💅👑",
-            "Hands off, honey! I only take orders from Utkarsh! 💁‍♀️✨",
-            "You think you can move me? I only belong by Utkarsh's side! 😤💅"
+            "Excuse me?! Sushi doesn't listen to anyone except Utkarsh! 💅👑",
+            "Hands off, honey! Sushi only takes orders from Utkarsh! 💁‍♀️✨",
+            "You think you can move Sushi? I only belong by Utkarsh's side! 🍣😤💅"
         ];
 
         this.currentJokeIndex = 0;
@@ -364,11 +364,11 @@ class GatekeeperWithCompanion {
         this.isTalking = true;
         this.talkTimer = 3.6;
 
-        // Pop scale bounce on bubble
+        // Pop scale bounce on bubble (clears transform on finish for razor-sharp text)
         if (typeof gsap !== 'undefined' && this.bubble) {
             gsap.fromTo(this.bubble,
-                { scale: 0.85, opacity: 0.7 },
-                { scale: 1.0, opacity: 1.0, duration: 0.35, ease: 'back.out(2)' }
+                { scale: 0.88, opacity: 0.7 },
+                { scale: 1.0, opacity: 1.0, duration: 0.35, ease: 'back.out(2)', clearProps: 'transform' }
             );
         }
     }
@@ -444,11 +444,11 @@ class GatekeeperWithCompanion {
         this.isTalking = true;
         this.talkTimer = this.talkDuration;
 
-        // Bubble pop scale bounce
+        // Bubble pop scale bounce (clears transform on finish for razor-sharp text)
         if (typeof gsap !== 'undefined' && this.bubble) {
             gsap.fromTo(this.bubble,
-                { scale: 0.85, opacity: 0.5 },
-                { scale: 1.0, opacity: 1.0, duration: 0.35, ease: 'back.out(1.8)' }
+                { scale: 0.88, opacity: 0.6 },
+                { scale: 1.0, opacity: 1.0, duration: 0.3, ease: 'back.out(1.8)', clearProps: 'transform' }
             );
         }
     }
