@@ -43,6 +43,34 @@
     <div class="cursor-dot" id="cursorDot"></div>
     <div class="cursor-trail" id="cursorTrail"></div>
 
+    <!-- 3D Sentient Cursed Gatekeeper Preloader Screen -->
+    <div class="gatekeeper-screen" id="gatekeeper-screen">
+        <canvas id="gatekeeper-canvas"></canvas>
+        <div class="gatekeeper-ambient-glow" id="gatekeeperAmbientGlow"></div>
+        
+        <div class="gatekeeper-header-pill">
+            <span class="gatekeeper-beacon"></span>
+            <span>SENTIENT DOMAIN BARRIER</span>
+        </div>
+
+        <button type="button" class="gatekeeper-skip-btn" id="gatekeeperSkipBtn">
+            <span>ENTER DOMAIN</span>
+            <i class="fa-solid fa-angles-right"></i>
+        </button>
+
+        <div class="gatekeeper-footer-hud">
+            <div class="gatekeeper-instruction" id="gatekeeperInstruction">
+                MOVE CURSOR CLOSER &bull; DISTURB THE SENTIENT ORB
+            </div>
+            <div class="gatekeeper-threat-meter">
+                <div class="gatekeeper-threat-fill" id="gatekeeperThreatFill"></div>
+            </div>
+        </div>
+
+        <div class="gatekeeper-shockwave" id="gatekeeperShockwave"></div>
+        <div class="gatekeeper-flash" id="gatekeeperFlash"></div>
+    </div>
+
     <!-- Cinematic Overlays -->
     <div class="vignette-overlay"></div>
     <div class="scanline-overlay"></div>
@@ -891,6 +919,9 @@
 
     <!-- Professional Scroll & Kinetic Animation System -->
     <script src="js/scroll-engine.js"></script>
+
+    <!-- Three.js 3D Sentient Cursed Gatekeeper Module -->
+    <script type="module" src="js/gatekeeper-3d.js"></script>
 
     <!-- Three.js Ambient Particle Scene Script -->
     <script type="module" src="js/three-scene.js"></script>
