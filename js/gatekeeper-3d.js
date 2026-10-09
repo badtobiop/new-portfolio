@@ -52,7 +52,7 @@ class GatekeeperWithCompanion {
 
         // Flight Animation State (Lands at bottom 48px, right 38px)
         this.flightStart = { x: 0, y: 0, r: 56 };
-        this.flightTarget = { x: window.innerWidth - 38 - 36, y: window.innerHeight - 48 - 36, r: 33 };
+        this.flightTarget = { x: window.innerWidth - 38 - 32.5, y: window.innerHeight - 48 - 32.5, r: 30 };
         this.flightDuration = 0.78;
         this.flightElapsed = 0;
 
@@ -183,28 +183,28 @@ class GatekeeperWithCompanion {
             this.circlePos.y = window.innerHeight / 2;
         }
 
-        // Update flight target to match bottom 48px, right 38px (72px circle)
+        // Update flight target to match bottom 48px, right 38px (65px circle)
         this.flightTarget = {
-            x: window.innerWidth - 38 - 36,
-            y: window.innerHeight - 48 - 36,
-            r: 33
+            x: window.innerWidth - 38 - 32.5,
+            y: window.innerHeight - 48 - 32.5,
+            r: 30
         };
     };
 
     setupCompanionCanvas() {
         if (!this.companionCanvas || !this.companionCtx) return;
         const dpr = Math.min(window.devicePixelRatio || 1, 2.0);
-        this.companionCanvas.width = 72 * dpr;
-        this.companionCanvas.height = 72 * dpr;
-        this.companionCanvas.style.width = '72px';
-        this.companionCanvas.style.height = '72px';
+        this.companionCanvas.width = 65 * dpr;
+        this.companionCanvas.height = 65 * dpr;
+        this.companionCanvas.style.width = '65px';
+        this.companionCanvas.style.height = '65px';
         this.companionCtx.scale(dpr, dpr);
     }
 
     getHomePos() {
         return {
-            x: window.innerWidth - 38 - 72,
-            y: window.innerHeight - 48 - 72
+            x: window.innerWidth - 38 - 65,
+            y: window.innerHeight - 48 - 65
         };
     }
 
@@ -240,8 +240,8 @@ class GatekeeperWithCompanion {
                 if (Math.hypot(newX - this.dragStartX, newY - this.dragStartY) > 6) {
                     this.hasDragged = true;
                 }
-                const clampedX = Math.max(10, Math.min(window.innerWidth - 82, newX));
-                const clampedY = Math.max(60, Math.min(window.innerHeight - 82, newY));
+                const clampedX = Math.max(10, Math.min(window.innerWidth - 75, newX));
+                const clampedY = Math.max(60, Math.min(window.innerHeight - 75, newY));
                 this.companion.style.left = `${clampedX}px`;
                 this.companion.style.top = `${clampedY}px`;
                 this.companion.style.bottom = 'auto';
@@ -269,8 +269,8 @@ class GatekeeperWithCompanion {
                     if (Math.hypot(newX - this.dragStartX, newY - this.dragStartY) > 6) {
                         this.hasDragged = true;
                     }
-                    const clampedX = Math.max(10, Math.min(window.innerWidth - 82, newX));
-                    const clampedY = Math.max(60, Math.min(window.innerHeight - 82, newY));
+                    const clampedX = Math.max(10, Math.min(window.innerWidth - 75, newX));
+                    const clampedY = Math.max(60, Math.min(window.innerHeight - 75, newY));
                     this.companion.style.left = `${clampedX}px`;
                     this.companion.style.top = `${clampedY}px`;
                     this.companion.style.bottom = 'auto';
@@ -528,11 +528,11 @@ class GatekeeperWithCompanion {
             r: this.circleRadius
         };
 
-        // Target position in bottom-right corner (bottom 48px, right 38px, 72px circle)
+        // Target position in bottom-right corner (bottom 48px, right 38px, 65px circle)
         this.flightTarget = {
-            x: window.innerWidth - 38 - 36,
-            y: window.innerHeight - 48 - 36,
-            r: 33
+            x: window.innerWidth - 38 - 32.5,
+            y: window.innerHeight - 48 - 32.5,
+            r: 30
         };
 
         // Unlock page scroll & animate Hero section elements
@@ -718,11 +718,11 @@ class GatekeeperWithCompanion {
     drawCompanion(elapsedTime, delta) {
         if (!this.companionCtx) return;
         const ctx = this.companionCtx;
-        const w = 72;
-        const h = 72;
-        const cx = 36;
-        const cy = 36;
-        const r = 33;
+        const w = 65;
+        const h = 65;
+        const cx = 32.5;
+        const cy = 32.5;
+        const r = 30;
 
         ctx.clearRect(0, 0, w, h);
 
@@ -758,7 +758,7 @@ class GatekeeperWithCompanion {
         ctx.restore();
 
         // Dynamic gaze tracking towards mouse (syncs eyes & mouth)
-        const scale = 33 / 56;
+        const scale = 30 / 56;
         const gazeX = this.mouse.x;
         const gazeY = -this.mouse.y;
 
